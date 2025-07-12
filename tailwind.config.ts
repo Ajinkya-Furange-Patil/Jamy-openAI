@@ -88,10 +88,15 @@ export default {
             height: '0',
           },
         },
+        'pulse-border': {
+          '0%, 100%': { boxShadow: '0 0 0 0 hsl(var(--ring) / 0.4)' },
+          '50%': { boxShadow: '0 0 0 4px hsl(var(--ring) / 0)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'pulse-border': 'pulse-border 2s infinite',
       },
     },
   },

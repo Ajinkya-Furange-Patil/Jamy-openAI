@@ -42,7 +42,10 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Type your message here..."
-          className="flex-1 resize-none pr-14"
+          className={cn(
+            'flex-1 resize-none pr-14 transition-shadow duration-300',
+            input.length > 0 && 'focus-visible:animate-pulse-border'
+            )}
           rows={1}
           disabled={isLoading}
           autoFocus
