@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Bot, User, Loader2 } from 'lucide-react';
+import { Bot, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Message } from '@/lib/types';
 
@@ -10,16 +10,18 @@ interface ChatMessagesProps {
   isLoading: boolean;
 }
 
+function TypingIndicator() {
+    return (
+        <div className="relative w-2 h-2 rounded-full bg-current text-primary dot-flashing before:w-2 before:h-2 before:rounded-full before:bg-current before:left-[-12px] after:w-2 after:h-2 after:rounded-full after:bg-current after:left-[12px]"/>
+    )
+}
+
 export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      const viewport = scrollAreaRef.current.querySelector('div');
-      if (viewport) {
-        viewport.scrollTop = viewport.scrollHeight;
-      }
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
   return (
@@ -66,11 +68,12 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
                   <Bot className="text-primary" />
                 </AvatarFallback>
               </Avatar>
-              <div className="max-w-sm md:max-w-md rounded-lg px-4 py-3 bg-muted">
-                <Loader2 className="animate-spin text-primary" />
+              <div className="max-w-sm md:max-w-md rounded-lg px-4 py-3 bg-muted flex items-center justify-center min-h-[44px]">
+                <TypingIndicator />
               </div>
             </div>
         )}
+        <div ref={messagesEndRef} />
       </div>
     </ScrollArea>
   );

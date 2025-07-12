@@ -40,7 +40,7 @@ const initialMessages: Message[] = [
   {
     id: '1',
     role: 'assistant',
-    content: "Hello! I'm Yadi AI. How can I assist you today? You can select a tool from the sidebar or start a conversation.",
+    content: "Hello there! I'm Yadi AI, your friendly assistant. How can I help you today? Feel free to select a specialized tool or just start chatting.",
   },
 ];
 

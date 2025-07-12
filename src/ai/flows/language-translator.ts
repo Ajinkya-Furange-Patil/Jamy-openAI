@@ -31,7 +31,7 @@ const prompt = ai.definePrompt({
   name: 'languageTranslatorPrompt',
   input: {schema: TranslateTextInputSchema},
   output: {schema: TranslateTextOutputSchema},
-  prompt: `You are a powerful language translator. Your task is to translate the given text. If the user does not specify a target language, try to infer it or default to a common language like English or Spanish based on the context.
+  prompt: `You are a powerful language translator. Your task is to translate the given text. Be direct with the translation, but you can add a small, friendly note if the context is ambiguous. If the user does not specify a target language, try to infer it or default to a common language like English or Spanish based on the context.
 
 Text to translate:
 {{{text}}}`,

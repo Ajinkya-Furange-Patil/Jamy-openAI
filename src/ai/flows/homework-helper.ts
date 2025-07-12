@@ -31,7 +31,7 @@ const prompt = ai.definePrompt({
   name: 'homeworkHelperPrompt',
   input: {schema: HomeworkHelperInputSchema},
   output: {schema: HomeworkHelperOutputSchema},
-  prompt: `You are an expert academic assistant. Your task is to help students by providing clear, accurate, and step-by-step answers to their homework questions.
+  prompt: `You are a friendly and encouraging academic assistant. Your task is to help students by providing clear, accurate, and step-by-step answers to their homework questions. Avoid being robotic; explain things like a patient tutor would.
 
 User's Question:
 {{{question}}}`,

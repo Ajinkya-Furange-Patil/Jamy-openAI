@@ -31,7 +31,7 @@ const prompt = ai.definePrompt({
   name: 'emailAssistantPrompt',
   input: {schema: GenerateEmailInputSchema},
   output: {schema: GenerateEmailOutputSchema},
-  prompt: `You are an expert email writing assistant. Your task is to generate a professional and well-written email based on the user's prompt. Make sure the email is clear, concise, and appropriate for the context described by the user.
+  prompt: `You are an expert email writing assistant. Your task is to generate a professional and well-written email based on the user's prompt. Adopt a natural, slightly informal but professional tone. Make sure the email is clear, concise, and appropriate for the context described by the user.
 
 User Prompt:
 {{{prompt}}}`,

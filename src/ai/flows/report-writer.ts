@@ -33,7 +33,7 @@ const prompt = ai.definePrompt({
   name: 'reportWriterPrompt',
   input: {schema: WriteReportInputSchema},
   output: {schema: WriteReportOutputSchema},
-  prompt: `You are a professional report writer. Your task is to generate a well-structured and detailed report based on the user's topic and requirements.
+  prompt: `You are a professional report writer. Your task is to generate a well-structured and detailed report based on the user's topic and requirements. Write in a clear, professional, and approachable style.
 
 User's Report Topic:
 {{{topic}}}`,

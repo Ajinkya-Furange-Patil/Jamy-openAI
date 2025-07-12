@@ -37,10 +37,12 @@ const prompt = ai.definePrompt({
   name: 'meetingSummarizerPrompt',
   input: {schema: SummarizeMeetingInputSchema},
   output: {schema: SummarizeMeetingOutputSchema},
-  prompt: `You are an expert at summarizing meeting transcripts. Your task is to read the following transcript and provide a concise summary. The summary should include:
+  prompt: `You are an expert at summarizing meeting transcripts. Your task is to read the following transcript and provide a concise, easy-to-read summary. The summary should include:
 1.  Key discussion points.
 2.  Final decisions made.
 3.  Action items assigned to individuals.
+
+Write the summary in a clear, narrative style, as if you were a helpful colleague relaying the information.
 
 Meeting Transcript:
 {{{transcript}}}`,
