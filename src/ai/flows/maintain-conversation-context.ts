@@ -1,0 +1,71 @@
+'use server';
+
+/**
+ * @fileOverview An AI agent that maintains conversation context.
+ *
+ * - maintainConversationContext - A function that maintains context in a conversation.
+ * - MaintainConversationContextInput - The input type for the maintainConversationContext function.
+ * - MaintainConversationContextOutput - The return type for the maintainConversationContext function.
+ */
+
+import {ai} from '@/ai/genkit';
+import {z} from 'genkit';
+
+const MaintainConversationContextInputSchema = z.object({
+  userMessage: z.string().describe('The message from the user.'),
+  conversationHistory: z.string().describe('The history of the conversation.'),
+});
+export type MaintainConversationContextInput = z.infer<
+  typeof MaintainConversationContextInputSchema
+>;
+
+const MaintainConversationContextOutputSchema = z.object({
+  aiResponse: z.string().describe('The AI response to the user message.'),
+  updatedConversationHistory: z
+    .string()
+    .describe('The updated conversation history.'),
+});
+export type MaintainConversationContextOutput = z.infer<
+  typeof MaintainConversationContextOutputSchema
+>;
+
+export async function maintainConversationContext(
+  input: MaintainConversationContextInput
+): Promise<MaintainConversationContextOutput> {
+  return maintainConversationContextFlow(input);
+}
+
+const prompt = ai.definePrompt({
+  name: 'maintainConversationContextPrompt',
+  input: {schema: MaintainConversationContextInputSchema},
+  output: {schema: MaintainConversationContextOutputSchema},
+  prompt: `You are Yadi, an AI assistant. Maintain context throughout the conversation.
+
+Conversation History:
+{{conversationHistory}}
+
+User Message:
+{{userMessage}}
+
+AI Response:`,
+});
+
+const maintainConversationContextFlow = ai.defineFlow(
+  {
+    name: 'maintainConversationContextFlow',
+    inputSchema: MaintainConversationContextInputSchema,
+    outputSchema: MaintainConversationContextOutputSchema,
+  },
+  async input => {
+    const {output} = await prompt(input);
+
+    // Update conversation history with the user message and AI response.
+    const updatedConversationHistory =
+      input.conversationHistory + '\nUser: ' + input.userMessage + '\nAI: ' + output!.aiResponse;
+
+    return {
+      aiResponse: output!.aiResponse,
+      updatedConversationHistory: updatedConversationHistory,
+    };
+  }
+);
