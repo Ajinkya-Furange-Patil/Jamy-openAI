@@ -31,6 +31,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { AudioPlayer } from './audio-player';
 
 const initialMessages: Message[] = [
   {
@@ -45,11 +46,13 @@ export function ChatPage() {
   const [history, setHistory] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [audioUrl, setAudioUrl] = useState<string>('');
   const { toast } = useToast();
 
   const handleNewConversation = () => {
     setMessages(initialMessages);
     setHistory('');
+    setAudioUrl('');
   };
 
   const handleSendMessage = async (input: string) => {
@@ -63,6 +66,7 @@ export function ChatPage() {
 
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
+    setAudioUrl('');
 
     const result = await sendMessage(history, input);
     
@@ -88,6 +92,10 @@ export function ChatPage() {
     
     if (result.updatedConversationHistory) {
       setHistory(result.updatedConversationHistory);
+    }
+    
+    if (result.audioUrl) {
+      setAudioUrl(result.audioUrl);
     }
   };
 
@@ -329,6 +337,7 @@ export function ChatPage() {
         <ChatHeader onGeneratePdf={handleGeneratePdf} onGeneratePpt={handleGeneratePpt} />
         <ChatMessages messages={messages} isLoading={isLoading} />
         <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+        {audioUrl && <AudioPlayer audioUrl={audioUrl} />}
       </SidebarInset>
     </SidebarProvider>
   );
