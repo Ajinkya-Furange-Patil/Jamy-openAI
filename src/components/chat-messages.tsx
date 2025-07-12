@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -50,7 +51,7 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
                   : 'bg-muted'
               )}
             >
-              <div className="text-sm whitespace-pre-wrap">{message.content}</div>
+              <div className="text-sm whitespace-pre-wrap space-y-2">{message.content}</div>
             </div>
             {message.role === 'user' && (
               <Avatar className="w-8 h-8 border shrink-0">

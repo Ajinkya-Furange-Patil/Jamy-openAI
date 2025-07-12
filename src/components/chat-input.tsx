@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, type FormEvent, useEffect, ChangeEvent } from 'react';
@@ -37,11 +38,11 @@ export function ChatInput({ onSendMessage, isLoading, placeholder, activeTool }:
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = true;
-      recognitionRef.current.interimResults = true;
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
 
-      recognitionRef.current.onresult = (event) => {
+      recognition.onresult = (event) => {
         let interimTranscript = '';
         let finalTranscript = '';
         for (let i = 0; i < event.results.length; i++) {
@@ -55,25 +56,19 @@ export function ChatInput({ onSendMessage, isLoading, placeholder, activeTool }:
         setInput(finalTranscript + interimTranscript);
       };
 
-      recognitionRef.current.onerror = (event) => {
+      recognition.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
         setIsRecording(false);
       };
-
-      recognitionRef.current.onend = () => {
-        if (isRecording) {
-            recognitionRef.current?.start();
-        }
-      };
+      
+      recognitionRef.current = recognition;
     }
 
     return () => {
         if (recognitionRef.current) {
-            recognitionRef.current.onend = null;
             recognitionRef.current.stop();
         }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleMicClick = () => {
@@ -111,8 +106,8 @@ export function ChatInput({ onSendMessage, isLoading, placeholder, activeTool }:
     setInput('');
     setFile(null);
     if(isRecording) {
-        setIsRecording(false);
         recognitionRef.current?.stop();
+        setIsRecording(false);
     }
     if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -175,12 +170,12 @@ export function ChatInput({ onSendMessage, isLoading, placeholder, activeTool }:
         />
 
         {file && (
-          <div className="absolute bottom-full left-0 mb-2">
+          <div className="absolute bottom-full left-0 mb-2 pl-2">
             <Badge variant="secondary" className="flex items-center gap-2">
               <span>{file.name}</span>
               <button
                 type="button"
-onClick={removeFile}
+                onClick={removeFile}
                 className="rounded-full hover:bg-muted-foreground/20 p-0.5"
                 aria-label="Remove file"
               >

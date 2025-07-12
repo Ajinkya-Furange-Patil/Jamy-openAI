@@ -1,13 +1,14 @@
+
 'use client';
 
 import { ChatPage } from '@/components/chat-page';
 import { SplashScreen } from '@/components/splash-screen';
-import { useLayoutEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function Home() {
   const [showSplash, setShowSplash] = useState(true);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
     }, 2000); 
