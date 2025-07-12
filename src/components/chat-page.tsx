@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, LogOut, User, Settings, Presentation, FileText, NotebookText } from 'lucide-react';
+import { Plus, LogOut, User, Settings, Presentation, FileText, NotebookText, Mail, Languages } from 'lucide-react';
 
 import {
   SidebarProvider,
@@ -119,6 +119,20 @@ export function ChatPage() {
     });
   };
 
+  const handleEmailAssistant = () => {
+    toast({
+      title: 'Email Assistant',
+      description: 'Email Assistant is not yet implemented.',
+    });
+  };
+
+  const handleTranslate = () => {
+    toast({
+      title: 'Language Translator',
+      description: 'Language Translator is not yet implemented.',
+    });
+  };
+
   const UserProfile = () => {
     if (!isLoggedIn) {
       return (
@@ -169,26 +183,10 @@ export function ChatPage() {
               xmlns="http://www.w3.org/2000/svg"
               className="size-8 text-primary shrink-0"
             >
-              <path
-                d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2Z"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M8.5 8.5C9.32843 8.5 10 9.17157 10 10C10 10.8284 9.32843 11.5 8.5 11.5C7.67157 11.5 7 10.8284 7 10C7 9.17157 7.67157 8.5 8.5 8.5Z"
-                fill="currentColor"
-              />
-              <path
-                d="M15.5 12.5C16.3284 12.5 17 13.1716 17 14C17 14.8284 16.3284 15.5 15.5 15.5C14.6716 15.5 14 14.8284 14 14C14 13.1716 14.6716 12.5 15.5 12.5Z"
-                fill="currentColor"
-              />
-              <path
-                d="M12 7C12.5523 7 13 7.44772 13 8V16C13 16.5523 12.5523 17 12 17C11.4477 17 11 16.5523 11 16V8C11 7.44772 11.4477 7 12 7Z"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+              <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M2 7L12 12L22 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M12 12V22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M17 4.5L7 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <span className="text-xl font-semibold">Yadi AI</span>
           </div>
@@ -214,6 +212,26 @@ export function ChatPage() {
               >
                 <NotebookText className="size-4" />
                 <span>Summarize</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={handleEmailAssistant}
+                tooltip={{ children: 'Email Assistant', side: 'right' }}
+                className="w-full"
+              >
+                <Mail className="size-4" />
+                <span>Email Assistant</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={handleTranslate}
+                tooltip={{ children: 'Language Translator', side: 'right' }}
+                className="w-full"
+              >
+                <Languages className="size-4" />
+                <span>Translator</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarGroup>
