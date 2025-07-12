@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useState } from 'react';
-import { Plus, Bot, LogOut, User } from 'lucide-react';
+import { Plus, Bot, LogOut, User, Settings } from 'lucide-react';
 
 import {
   SidebarProvider,
@@ -101,6 +102,13 @@ export function ChatPage() {
       description: 'PPT generation is not yet implemented.',
     });
   };
+  
+  const handleSettings = () => {
+    toast({
+      title: 'Settings',
+      description: 'Settings are not yet implemented.',
+    });
+  };
 
   const UserProfile = () => {
     if (!isLoggedIn) {
@@ -162,6 +170,16 @@ export function ChatPage() {
         </SidebarMenu>
         <SidebarSeparator />
         <SidebarFooter className="p-2">
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={handleSettings}
+              tooltip={{ children: 'Settings', side: 'right' }}
+              className="w-full"
+            >
+              <Settings className="size-4" />
+              <span>Settings</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <UserProfile />
         </SidebarFooter>
       </Sidebar>
