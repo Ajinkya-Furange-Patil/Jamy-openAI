@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, LogOut, User, Settings, Presentation, FileText, NotebookText, Mail, Languages } from 'lucide-react';
+import { Plus, LogOut, User, Settings, Presentation, FileText, NotebookText, Mail, Languages, GraduationCap, ClipboardEdit } from 'lucide-react';
 
 import {
   SidebarProvider,
@@ -133,6 +133,20 @@ export function ChatPage() {
     });
   };
 
+  const handleHomeworkHelper = () => {
+    toast({
+      title: 'Homework Helper',
+      description: 'Homework Helper is not yet implemented.',
+    });
+  };
+
+  const handleResearchAssistant = () => {
+    toast({
+      title: 'Research Assistant',
+      description: 'Research Assistant is not yet implemented.',
+    });
+  };
+
   const UserProfile = () => {
     if (!isLoggedIn) {
       return (
@@ -232,6 +246,29 @@ export function ChatPage() {
               >
                 <Languages className="size-4" />
                 <span>Translator</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarGroup>
+          <SidebarGroup className="px-0 pt-2 pb-2">
+            <SidebarGroupLabel>For Students</SidebarGroupLabel>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={handleHomeworkHelper}
+                tooltip={{ children: 'Homework Helper', side: 'right' }}
+                className="w-full"
+              >
+                <ClipboardEdit className="size-4" />
+                <span>Homework Helper</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={handleResearchAssistant}
+                tooltip={{ children: 'Research Assistant', side: 'right' }}
+                className="w-full"
+              >
+                <GraduationCap className="size-4" />
+                <span>Research Assistant</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarGroup>
