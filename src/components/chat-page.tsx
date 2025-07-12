@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Bot } from 'lucide-react';
+import { Plus, Bot, LogOut, User } from 'lucide-react';
 
 import {
   SidebarProvider,
@@ -11,7 +11,8 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarInset,
-  useSidebar,
+  SidebarFooter,
+  SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { ChatHeader } from '@/components/chat-header';
 import { ChatMessages } from '@/components/chat-messages';
@@ -19,7 +20,14 @@ import { ChatInput } from '@/components/chat-input';
 import { type Message } from '@/lib/types';
 import { sendMessage } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const initialMessages: Message[] = [
   {
@@ -33,6 +41,7 @@ export function ChatPage() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [history, setHistory] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
   const { toast } = useToast();
 
   const handleNewConversation = () => {
@@ -80,7 +89,6 @@ export function ChatPage() {
   };
 
   const handleGeneratePdf = () => {
-    // TODO: Implement PDF generation logic
     toast({
       title: 'Generate PDF',
       description: 'PDF generation is not yet implemented.',
@@ -88,13 +96,48 @@ export function ChatPage() {
   };
 
   const handleGeneratePpt = () => {
-    // TODO: Implement PPT generation logic
     toast({
       title: 'Generate PPT',
       description: 'PPT generation is not yet implemented.',
     });
   };
 
+  const UserProfile = () => {
+    if (!isLoggedIn) {
+      return (
+        <Button className="w-full" onClick={() => setIsLoggedIn(true)}>Login</Button>
+      );
+    }
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="w-full justify-start p-2 h-auto">
+            <div className="flex justify-between items-center w-full">
+              <div className="flex gap-2 items-center">
+                <Avatar className="size-8">
+                  <AvatarImage src="https://placehold.co/100x100.png" data-ai-hint="profile picture" alt="User avatar" />
+                  <AvatarFallback>
+                    <User />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col items-start">
+                  <span className="font-medium text-sm">John Doe</span>
+                  <span className="text-xs text-muted-foreground">john.doe@example.com</span>
+                </div>
+              </div>
+            </div>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56 mb-2">
+          <DropdownMenuItem onClick={() => setIsLoggedIn(false)}>
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Log out</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
 
   return (
     <SidebarProvider>
@@ -105,7 +148,7 @@ export function ChatPage() {
             <span className="text-xl font-semibold">Yadi AI</span>
           </div>
         </SidebarHeader>
-        <SidebarMenu className="p-2">
+        <SidebarMenu className="p-2 flex-1">
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={handleNewConversation}
@@ -117,6 +160,10 @@ export function ChatPage() {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+        <SidebarSeparator />
+        <SidebarFooter className="p-2">
+          <UserProfile />
+        </SidebarFooter>
       </Sidebar>
       <SidebarInset className="flex flex-col h-[100svh]">
         <ChatHeader onGeneratePdf={handleGeneratePdf} onGeneratePpt={handleGeneratePpt} />
