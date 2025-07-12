@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, LogOut, User, Settings, Presentation, FileText, NotebookText, Mail, Languages, GraduationCap, ClipboardEdit, Briefcase, PenSquare, Paperclip } from 'lucide-react';
+import { Plus, LogOut, User, Settings, Presentation, FileText, NotebookText, Mail, Languages, GraduationCap, ClipboardEdit, Briefcase, PenSquare, Paperclip, MessageSquare } from 'lucide-react';
 
 import {
   SidebarProvider,
@@ -20,7 +20,7 @@ import {
 import { ChatHeader } from '@/components/chat-header';
 import { ChatMessages } from '@/components/chat-messages';
 import { ChatInput } from '@/components/chat-input';
-import { type Message } from '@/lib/types';
+import { type Message, type Tool } from '@/lib/types';
 import { sendMessage } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -39,9 +39,32 @@ const initialMessages: Message[] = [
   {
     id: '1',
     role: 'assistant',
-    content: "Hello! I'm Yadi AI. How can I assist you today? You can ask me questions or upload a document for summarization.",
+    content: "Hello! I'm Yadi AI. How can I assist you today? You can select a tool from the sidebar or start a conversation.",
   },
 ];
+
+const toolPlaceholders: Record<Tool, string> = {
+    chat: 'Type your message here or use the microphone...',
+    summarize: 'Attach a .txt file to summarize. You can add optional instructions here.',
+    email: 'Describe the email you want to write. For example, "Draft a follow-up email to a client..."',
+    translate: 'Enter the text you want to translate. For example, "Translate \'Hello, how are you?\' to French"',
+    'homework-helper': 'Ask a question about your homework...',
+    'research-assistant': 'What topic do you need help researching?',
+    'meeting-summarizer': 'Paste the meeting transcript or attach a file to summarize.',
+    'report-writer': 'Describe the report you need. For example, "Write a quarterly sales report..."'
+};
+
+const toolInitialMessages: Record<Tool, Message[]> = {
+    chat: initialMessages,
+    summarize: [{ id: '1', role: 'assistant', content: 'Welcome to the Summarizer tool. Please attach a text file (.txt) and I will provide a concise summary for you.' }],
+    email: [{ id: '1', role: 'assistant', content: 'Welcome to the Email Assistant. Tell me what kind of email you need to write, and I\'ll draft it for you.' }],
+    translate: [{ id: '1', role: 'assistant', content: 'Welcome to the Language Translator. Enter any text and I will translate it for you.' }],
+    'homework-helper': [{ id: '1', role: 'assistant', content: 'Welcome to the Homework Helper. How can I assist you with your assignments?' }],
+    'research-assistant': [{ id: '1', role: 'assistant', content: 'Welcome to the Research Assistant. What information are you looking for today?' }],
+    'meeting-summarizer': [{ id: '1', role: 'assistant', content: 'Welcome to the Meeting Summarizer. You can paste a transcript or upload a file to get started.' }],
+    'report-writer': [{ id: '1', role: 'assistant', content: 'Welcome to the Report Writer. Describe the report you need, and I will help you create it.' }],
+};
+
 
 export function ChatPage() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
@@ -50,13 +73,21 @@ export function ChatPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(true);
   const [audioUrl, setAudioUrl] = useState<string>('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [activeTool, setActiveTool] = useState<Tool>('chat');
   const { toast } = useToast();
 
   const handleNewConversation = () => {
-    setMessages(initialMessages);
+    setMessages(toolInitialMessages[activeTool] || initialMessages);
     setHistory('');
     setAudioUrl('');
   };
+  
+  const handleToolChange = (tool: Tool) => {
+      setActiveTool(tool);
+      setMessages(toolInitialMessages[tool] || initialMessages);
+      setHistory('');
+      setAudioUrl('');
+  }
 
   const fileToText = async (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -78,6 +109,15 @@ export function ChatPage() {
   
     let messageContent: React.ReactNode = input;
     let documentText: string | undefined;
+
+    if (activeTool === 'summarize' && !file) {
+        toast({
+            variant: 'destructive',
+            title: 'File Required',
+            description: 'The Summarize tool requires a .txt file to be attached.',
+        });
+        return;
+    }
 
     if (file) {
       if (file.type.startsWith('text/')) {
@@ -124,7 +164,7 @@ export function ChatPage() {
     setIsLoading(true);
     setAudioUrl('');
 
-    const result = await sendMessage(history, input, documentText);
+    const result = await sendMessage(history, input, documentText, activeTool);
     
     setIsLoading(false);
 
@@ -170,53 +210,11 @@ export function ChatPage() {
       description: 'PPT generation is not yet implemented.',
     });
   };
-  
-  const handleSummarize = () => {
-    toast({
-      title: 'Summarize Document',
-      description: 'To summarize, please attach a .txt file using the paperclip icon in the chat input.',
-    });
-  };
 
-  const handleEmailAssistant = () => {
+  const createToastHandler = (title: string) => () => {
     toast({
-      title: 'Email Assistant',
-      description: 'Email Assistant is not yet implemented.',
-    });
-  };
-
-  const handleTranslate = () => {
-    toast({
-      title: 'Language Translator',
-      description: 'Language Translator is not yet implemented.',
-    });
-  };
-
-  const handleHomeworkHelper = () => {
-    toast({
-      title: 'Homework Helper',
-      description: 'Homework Helper is not yet implemented.',
-    });
-  };
-
-  const handleResearchAssistant = () => {
-    toast({
-      title: 'Research Assistant',
-      description: 'Research Assistant is not yet implemented.',
-    });
-  };
-
-  const handleMeetingSummarizer = () => {
-    toast({
-      title: 'Meeting Summarizer',
-      description: 'Meeting Summarizer is not yet implemented.',
-    });
-  };
-
-  const handleReportWriter = () => {
-    toast({
-      title: 'Report Writer',
-      description: 'Report Writer is not yet implemented.',
+      title: `${title} is not yet implemented`,
+      description: 'This feature is coming soon!',
     });
   };
 
@@ -263,18 +261,14 @@ export function ChatPage() {
         <Sidebar side="left" collapsible="icon" variant="sidebar">
           <SidebarHeader className="p-2">
             <div className="flex items-center gap-2 p-2">
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="size-8 text-primary shrink-0"
-              >
-                <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M2 7L12 12L22 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M12 12V22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M17 4.5L7 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-8 text-primary shrink-0">
+                <path d="M16 30C23.732 30 30 23.732 30 16C30 8.26801 23.732 2 16 2C8.26801 2 2 8.26801 2 16C2 23.732 8.26801 30 16 30Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M11.5 11.5L20.5 20.5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M20.5 11.5L11.5 20.5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M16 2V7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M16 25V30" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M25 16H30" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2 16H7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
               <span className="text-xl font-semibold">Yadi AI</span>
             </div>
@@ -290,11 +284,24 @@ export function ChatPage() {
                 <span>New Conversation</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            <SidebarSeparator />
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={() => handleToolChange('chat')}
+                isActive={activeTool === 'chat'}
+                tooltip={{ children: 'General Chat', side: 'right' }}
+                className="w-full"
+              >
+                <MessageSquare className="size-4" />
+                <span>Chat</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
             <SidebarGroup className="px-0 pt-4 pb-2">
               <SidebarGroupLabel>Tools</SidebarGroupLabel>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={handleSummarize}
+                  onClick={() => handleToolChange('summarize')}
+                  isActive={activeTool === 'summarize'}
                   tooltip={{ children: 'Summarize Document', side: 'right' }}
                   className="w-full"
                 >
@@ -304,7 +311,8 @@ export function ChatPage() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={handleEmailAssistant}
+                  onClick={() => handleToolChange('email')}
+                  isActive={activeTool === 'email'}
                   tooltip={{ children: 'Email Assistant', side: 'right' }}
                   className="w-full"
                 >
@@ -314,7 +322,8 @@ export function ChatPage() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={handleTranslate}
+                  onClick={() => handleToolChange('translate')}
+                  isActive={activeTool === 'translate'}
                   tooltip={{ children: 'Language Translator', side: 'right' }}
                   className="w-full"
                 >
@@ -327,7 +336,7 @@ export function ChatPage() {
               <SidebarGroupLabel>For Students</SidebarGroupLabel>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={handleHomeworkHelper}
+                  onClick={createToastHandler('Homework Helper')}
                   tooltip={{ children: 'Homework Helper', side: 'right' }}
                   className="w-full"
                 >
@@ -337,7 +346,7 @@ export function ChatPage() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={handleResearchAssistant}
+                  onClick={createToastHandler('Research Assistant')}
                   tooltip={{ children: 'Research Assistant', side: 'right' }}
                   className="w-full"
                 >
@@ -350,7 +359,7 @@ export function ChatPage() {
               <SidebarGroupLabel>For Professionals</SidebarGroupLabel>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={handleMeetingSummarizer}
+                  onClick={createToastHandler('Meeting Summarizer')}
                   tooltip={{ children: 'Meeting Summarizer', side: 'right' }}
                   className="w-full"
                 >
@@ -360,7 +369,7 @@ export function ChatPage() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={handleReportWriter}
+                  onClick={createToastHandler('Report Writer')}
                   tooltip={{ children: 'Report Writer', side: 'right' }}
                   className="w-full"
                 >
@@ -388,7 +397,12 @@ export function ChatPage() {
         <SidebarInset className="flex flex-col h-[100svh]">
           <ChatHeader onGeneratePdf={handleGeneratePdf} onGeneratePpt={handleGeneratePpt} />
           <ChatMessages messages={messages} isLoading={isLoading} />
-          <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+          <ChatInput
+            onSendMessage={handleSendMessage}
+            isLoading={isLoading}
+            placeholder={toolPlaceholders[activeTool]}
+            key={activeTool}
+          />
           {audioUrl && <AudioPlayer audioUrl={audioUrl} />}
         </SidebarInset>
       </SidebarProvider>

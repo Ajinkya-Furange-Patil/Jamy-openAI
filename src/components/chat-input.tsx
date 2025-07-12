@@ -10,9 +10,10 @@ import { Badge } from './ui/badge';
 interface ChatInputProps {
   onSendMessage: (message: string, file?: File) => void;
   isLoading: boolean;
+  placeholder?: string;
 }
 
-export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
+export function ChatInput({ onSendMessage, isLoading, placeholder }: ChatInputProps) {
   const [input, setInput] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -144,7 +145,7 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Type your message here or use the microphone..."
+          placeholder={placeholder || "Type your message here or use the microphone..."}
           className={cn(
             'flex-1 resize-none pr-24 pl-12 transition-shadow duration-300',
             input.length > 0 && 'focus-visible:animate-pulse-border'

@@ -4,39 +4,55 @@ import {maintainConversationContext} from '@/ai/flows/maintain-conversation-cont
 import {generateInitialResponse} from '@/ai/flows/generate-initial-response';
 import {convertTextToSpeech} from '@/ai/flows/text-to-speech';
 import {generateDocumentSummary} from '@/ai/flows/generate-document-summary';
+import { generateEmail } from '@/ai/flows/email-assistant';
+import { translateText } from '@/ai/flows/language-translator';
+import type { Tool } from '@/lib/types';
+
 
 export async function sendMessage(
   history: string,
   message: string,
-  documentText?: string
+  documentText?: string,
+  activeTool: Tool = 'chat'
 ) {
   try {
     let aiResponseText: string | null = null;
     let updatedHistory: string | null = history;
 
-    // If a document is attached, summarize it first.
-    if (documentText) {
-      const summaryResult = await generateDocumentSummary({documentText});
-      aiResponseText = `I've summarized the document for you:\n\n${summaryResult.summary}`;
-      // Add a system message to history about the summary.
-      updatedHistory += `\nSystem: Summarized document. Summary: ${summaryResult.summary}`;
+    if (activeTool === 'summarize' && documentText) {
+        const summaryResult = await generateDocumentSummary({ documentText });
+        aiResponseText = `I've summarized the document for you:\n\n${summaryResult.summary}`;
+        updatedHistory += `\nSystem: Summarized document. Summary: ${summaryResult.summary}`;
+    } else if (activeTool === 'email' && message.trim()) {
+        const emailResult = await generateEmail({ prompt: message });
+        aiResponseText = emailResult.email;
+        updatedHistory += `\nUser (Email Assistant): ${message}\nAI: ${aiResponseText}`;
+    } else if (activeTool === 'translate' && message.trim()) {
+        const translateResult = await translateText({ text: message });
+        aiResponseText = translateResult.translation;
+        updatedHistory += `\nUser (Translator): ${message}\nAI: ${aiResponseText}`;
+    } else {
+        // Default chat behavior
+        if (message.trim()) {
+          if (history) {
+            const result = await maintainConversationContext({
+              userMessage: message,
+              conversationHistory: history,
+            });
+            aiResponseText = result.aiResponse;
+            updatedHistory = result.updatedConversationHistory;
+          } else {
+            const result = await generateInitialResponse({prompt: message});
+            aiResponseText = result.response;
+            updatedHistory = `User: ${message}\nAI: ${result.response}`;
+          }
+        } else if (documentText) { // Handle summarization if it's the only thing provided in chat mode
+            const summaryResult = await generateDocumentSummary({documentText});
+            aiResponseText = `I've summarized the document for you:\n\n${summaryResult.summary}`;
+            updatedHistory += `\nSystem: Summarized document. Summary: ${summaryResult.summary}`;
+        }
     }
 
-    // If there's also a text message, handle it as a follow-up.
-    if (message.trim()) {
-      if (updatedHistory) {
-        const result = await maintainConversationContext({
-          userMessage: message,
-          conversationHistory: updatedHistory,
-        });
-        aiResponseText = result.aiResponse; // The conversational response overrides the summary as the final spoken response
-        updatedHistory = result.updatedConversationHistory;
-      } else {
-        const result = await generateInitialResponse({prompt: message});
-        aiResponseText = result.response;
-        updatedHistory = `User: ${message}\nAI: ${result.response}`;
-      }
-    }
 
     if (!aiResponseText) {
       return {
