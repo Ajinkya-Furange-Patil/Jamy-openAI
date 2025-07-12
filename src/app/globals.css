@@ -95,6 +95,16 @@ body {
     from { opacity: 0; transform: translateY(15px) scale(0.98); }
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
-}
 
-    
+  .animated-gradient {
+    animation: gradient-animation 15s ease infinite;
+    background: linear-gradient(-45deg, hsl(var(--background)), hsl(var(--primary) / 0.1), hsl(var(--background)), hsl(var(--secondary) / 0.1));
+    background-size: 400% 400%;
+  }
+
+  @keyframes gradient-animation {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+}

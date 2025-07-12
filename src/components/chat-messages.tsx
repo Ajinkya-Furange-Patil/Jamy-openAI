@@ -4,7 +4,6 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Bot, User, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Message } from '@/lib/types';
-import { Skeleton } from './ui/skeleton';
 
 interface ChatMessagesProps {
   messages: Message[];
@@ -43,7 +42,7 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
             )}
             <div
               className={cn(
-                'max-w-sm md:max-w-md rounded-lg px-4 py-3',
+                'max-w-sm md:max-w-md rounded-lg px-4 py-3 shadow-md transition-all hover:shadow-lg hover:-translate-y-1',
                 message.role === 'user'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-muted'

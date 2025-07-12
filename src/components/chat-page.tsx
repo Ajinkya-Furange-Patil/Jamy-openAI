@@ -34,6 +34,7 @@ import {
 import { AudioPlayer } from './audio-player';
 import { Badge } from './ui/badge';
 import { SettingsDialog } from './settings-dialog';
+import { cn } from '@/lib/utils';
 
 const initialMessages: Message[] = [
   {
@@ -263,13 +264,9 @@ export function ChatPage() {
           <SidebarHeader className="p-2">
             <div className="flex items-center gap-2 p-2">
               <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-8 text-primary shrink-0">
-                <path d="M16 30C23.732 30 30 23.732 30 16C30 8.26801 23.732 2 16 2C8.26801 2 2 8.26801 2 16C2 23.732 8.26801 30 16 30Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M11.5 11.5L20.5 20.5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M20.5 11.5L11.5 20.5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M16 2V7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M16 25V30" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M25 16H30" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 16H7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M16 2.66663C16 2.66663 8 7.33329 8 16C8 24.6666 16 29.3333 16 29.3333C16 29.3333 24 24.6666 24 16C24 7.33329 16 2.66663 16 2.66663Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M20 12L12 20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 12L20 20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
               <span className="text-xl font-semibold">Yadi AI</span>
             </div>
@@ -399,7 +396,7 @@ export function ChatPage() {
             <UserProfile />
           </SidebarFooter>
         </Sidebar>
-        <SidebarInset className="flex flex-col h-[100svh]">
+        <SidebarInset className={cn("flex flex-col h-[100svh] animated-gradient")}>
           <ChatHeader onGeneratePdf={handleGeneratePdf} onGeneratePpt={handleGeneratePpt} />
           <ChatMessages messages={messages} isLoading={isLoading} />
           <ChatInput
