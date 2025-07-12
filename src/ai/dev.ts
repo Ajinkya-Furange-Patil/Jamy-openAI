@@ -7,3 +7,7 @@ import '@/ai/flows/generate-document-summary.ts';
 import '@/ai/flows/text-to-speech.ts';
 import '@/ai/flows/email-assistant.ts';
 import '@/ai/flows/language-translator.ts';
+import '@/ai/flows/homework-helper.ts';
+import '@/ai/flows/research-assistant.ts';
+import '@/ai/flows/meeting-summarizer.ts';
+import '@/ai/flows/report-writer.ts';

@@ -110,11 +110,11 @@ export function ChatPage() {
     let messageContent: React.ReactNode = input;
     let documentText: string | undefined;
 
-    if (activeTool === 'summarize' && !file) {
+    if ((activeTool === 'summarize' || activeTool === 'meeting-summarizer') && !file && !input.trim()) {
         toast({
             variant: 'destructive',
-            title: 'File Required',
-            description: 'The Summarize tool requires a .txt file to be attached.',
+            title: 'Input Required',
+            description: `The ${activeTool} tool requires a file or text to be provided.`,
         });
         return;
     }
@@ -135,7 +135,7 @@ export function ChatPage() {
         toast({
             variant: 'destructive',
             title: 'Unsupported File Type',
-            description: 'Currently, only plain text files (.txt) are supported for summarization.',
+            description: 'Currently, only plain text files (.txt) are supported.',
         });
         return;
       }
@@ -208,13 +208,6 @@ export function ChatPage() {
     toast({
       title: 'Generate PPT',
       description: 'PPT generation is not yet implemented.',
-    });
-  };
-
-  const createToastHandler = (title: string) => () => {
-    toast({
-      title: `${title} is not yet implemented`,
-      description: 'This feature is coming soon!',
     });
   };
 
@@ -336,7 +329,8 @@ export function ChatPage() {
               <SidebarGroupLabel>For Students</SidebarGroupLabel>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={createToastHandler('Homework Helper')}
+                  onClick={() => handleToolChange('homework-helper')}
+                  isActive={activeTool === 'homework-helper'}
                   tooltip={{ children: 'Homework Helper', side: 'right' }}
                   className="w-full"
                 >
@@ -346,7 +340,8 @@ export function ChatPage() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={createToastHandler('Research Assistant')}
+                  onClick={() => handleToolChange('research-assistant')}
+                  isActive={activeTool === 'research-assistant'}
                   tooltip={{ children: 'Research Assistant', side: 'right' }}
                   className="w-full"
                 >
@@ -359,7 +354,8 @@ export function ChatPage() {
               <SidebarGroupLabel>For Professionals</SidebarGroupLabel>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={createToastHandler('Meeting Summarizer')}
+                  onClick={() => handleToolChange('meeting-summarizer')}
+                  isActive={activeTool === 'meeting-summarizer'}
                   tooltip={{ children: 'Meeting Summarizer', side: 'right' }}
                   className="w-full"
                 >
@@ -369,7 +365,8 @@ export function ChatPage() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={createToastHandler('Report Writer')}
+                  onClick={() => handleToolChange('report-writer')}
+                  isActive={activeTool === 'report-writer'}
                   tooltip={{ children: 'Report Writer', side: 'right' }}
                   className="w-full"
                 >
