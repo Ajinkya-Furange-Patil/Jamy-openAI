@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Bot, LogOut, User, Settings } from 'lucide-react';
+import { Plus, LogOut, User, Settings } from 'lucide-react';
 
 import {
   SidebarProvider,
@@ -152,7 +152,23 @@ export function ChatPage() {
       <Sidebar side="left" collapsible="icon" variant="sidebar">
         <SidebarHeader className="p-2">
           <div className="flex items-center gap-2 p-2">
-            <Bot className="size-8 text-primary shrink-0" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="size-8 text-primary shrink-0"
+            >
+              <path d="M15 14c.2-1 .7-1.7 1.5-2.5C17.7 10.2 19 9 19 7c0-2.2-1.8-4-4-4S11 4.8 11 7c0 2 1.3 3.2 2.5 4.5.8.8 1.3 1.5 1.5 2.5" />
+              <path d="M9 18c-3.3 0-6-2.7-6-6v-1.5" />
+              <path d="M14 22v-4.5" />
+              <path d="M10 14H2" />
+              <path d="M3 21.5V17" />
+              <circle cx="12" cy="12" r="10" />
+            </svg>
             <span className="text-xl font-semibold">Yadi AI</span>
           </div>
         </SidebarHeader>
