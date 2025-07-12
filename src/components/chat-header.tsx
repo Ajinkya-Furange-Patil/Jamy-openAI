@@ -1,14 +1,31 @@
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { FileText, Presentation } from 'lucide-react';
 
-export function ChatHeader() {
+interface ChatHeaderProps {
+  onGeneratePdf: () => void;
+  onGeneratePpt: () => void;
+}
+
+export function ChatHeader({ onGeneratePdf, onGeneratePpt }: ChatHeaderProps) {
   return (
     <header className="flex items-center h-16 shrink-0 justify-between px-4 border-b">
       <div className="flex items-center gap-2">
         <SidebarTrigger className="md:hidden" />
         <h2 className="text-lg font-semibold">Conversation</h2>
       </div>
-      <Badge variant="outline">Free & Open Source</Badge>
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={onGeneratePdf}>
+          <FileText className="mr-2 h-4 w-4" />
+          Generate PDF
+        </Button>
+        <Button variant="outline" size="sm" onClick={onGeneratePpt}>
+          <Presentation className="mr-2 h-4 w-4" />
+          Generate PPT
+        </Button>
+        <Badge variant="outline" className="hidden sm:inline-flex">Free & Open Source</Badge>
+      </div>
     </header>
   );
 }

@@ -79,6 +79,23 @@ export function ChatPage() {
     }
   };
 
+  const handleGeneratePdf = () => {
+    // TODO: Implement PDF generation logic
+    toast({
+      title: 'Generate PDF',
+      description: 'PDF generation is not yet implemented.',
+    });
+  };
+
+  const handleGeneratePpt = () => {
+    // TODO: Implement PPT generation logic
+    toast({
+      title: 'Generate PPT',
+      description: 'PPT generation is not yet implemented.',
+    });
+  };
+
+
   return (
     <SidebarProvider>
       <Sidebar side="left" collapsible="icon" variant="sidebar">
@@ -102,7 +119,7 @@ export function ChatPage() {
         </SidebarMenu>
       </Sidebar>
       <SidebarInset className="flex flex-col h-[100svh]">
-        <ChatHeader />
+        <ChatHeader onGeneratePdf={handleGeneratePdf} onGeneratePpt={handleGeneratePpt} />
         <ChatMessages messages={messages} isLoading={isLoading} />
         <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
       </SidebarInset>
