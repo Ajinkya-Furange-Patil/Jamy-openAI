@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, LogOut, User, Settings, Presentation, FileText, NotebookText, Mail, Languages, GraduationCap, ClipboardEdit } from 'lucide-react';
+import { Plus, LogOut, User, Settings, Presentation, FileText, NotebookText, Mail, Languages, GraduationCap, ClipboardEdit, Briefcase, PenSquare } from 'lucide-react';
 
 import {
   SidebarProvider,
@@ -147,6 +147,20 @@ export function ChatPage() {
     });
   };
 
+  const handleMeetingSummarizer = () => {
+    toast({
+      title: 'Meeting Summarizer',
+      description: 'Meeting Summarizer is not yet implemented.',
+    });
+  };
+
+  const handleReportWriter = () => {
+    toast({
+      title: 'Report Writer',
+      description: 'Report Writer is not yet implemented.',
+    });
+  };
+
   const UserProfile = () => {
     if (!isLoggedIn) {
       return (
@@ -269,6 +283,29 @@ export function ChatPage() {
               >
                 <GraduationCap className="size-4" />
                 <span>Research Assistant</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarGroup>
+          <SidebarGroup className="px-0 pt-2 pb-2">
+            <SidebarGroupLabel>For Professionals</SidebarGroupLabel>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={handleMeetingSummarizer}
+                tooltip={{ children: 'Meeting Summarizer', side: 'right' }}
+                className="w-full"
+              >
+                <Briefcase className="size-4" />
+                <span>Meeting Summarizer</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={handleReportWriter}
+                tooltip={{ children: 'Report Writer', side: 'right' }}
+                className="w-full"
+              >
+                <PenSquare className="size-4" />
+                <span>Report Writer</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarGroup>
