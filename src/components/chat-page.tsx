@@ -166,7 +166,7 @@ export function ChatPage() {
     const userMessage: Message = {
       id: String(Date.now()),
       role: 'user',
-      content: messageContent,
+      content: messageContent || "Processing file...", // Show placeholder if no text
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -206,19 +206,6 @@ export function ChatPage() {
     }
   };
 
-  const handleGeneratePdf = () => {
-    toast({
-      title: 'Generate PDF',
-      description: 'PDF generation is not yet implemented.',
-    });
-  };
-
-  const handleGeneratePpt = () => {
-    toast({
-      title: 'Generate PPT',
-      description: 'PPT generation is not yet implemented.',
-    });
-  };
 
   const UserProfile = () => {
     if (!isLoggedIn) {
@@ -241,7 +228,6 @@ export function ChatPage() {
                 </Avatar>
                 <div className="flex flex-col items-start">
                   <span className="font-medium text-sm">John Doe</span>
-                  <span className="text-xs text-muted-foreground">john.doe@example.com</span>
                 </div>
               </div>
             </div>
@@ -397,12 +383,13 @@ export function ChatPage() {
           </SidebarFooter>
         </Sidebar>
         <SidebarInset className={cn("flex flex-col h-[100svh] animated-gradient")}>
-          <ChatHeader onGeneratePdf={handleGeneratePdf} onGeneratePpt={handleGeneratePpt} />
+          <ChatHeader />
           <ChatMessages messages={messages} isLoading={isLoading} />
           <ChatInput
             onSendMessage={handleSendMessage}
             isLoading={isLoading}
             placeholder={toolPlaceholders[activeTool]}
+            activeTool={activeTool}
             key={activeTool}
           />
           {audioUrl && <AudioPlayer audioUrl={audioUrl} />}

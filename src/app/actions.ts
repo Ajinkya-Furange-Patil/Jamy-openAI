@@ -17,11 +17,11 @@ export async function sendMessage(
   message: string,
   documentText?: string,
   activeTool: Tool = 'chat',
-  customInstructions?: string,
+  customInstructions?: string
 ) {
   try {
     let aiResponseText: string | null = null;
-    let updatedHistory: string | null = history;
+    let updatedHistory: string = history;
 
     if (activeTool === 'summarize' && documentText) {
       const summaryResult = await generateDocumentSummary({documentText});
@@ -81,7 +81,7 @@ export async function sendMessage(
         aiResponse: null,
         audioUrl: null,
         updatedConversationHistory: history,
-        error: 'No response from AI.',
+        error: 'The AI did not generate a response. Please try again.',
       };
     }
 

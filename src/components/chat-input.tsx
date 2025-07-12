@@ -6,20 +6,30 @@ import { Button } from '@/components/ui/button';
 import { Send, Mic, Loader2, Paperclip, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
+import type { Tool } from '@/lib/types';
 
 interface ChatInputProps {
   onSendMessage: (message: string, file?: File) => void;
   isLoading: boolean;
   placeholder?: string;
+  activeTool: Tool;
 }
 
-export function ChatInput({ onSendMessage, isLoading, placeholder }: ChatInputProps) {
+export function ChatInput({ onSendMessage, isLoading, placeholder, activeTool }: ChatInputProps) {
   const [input, setInput] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  useEffect(() => {
+    // Auto-resize textarea
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+      inputRef.current.style.height = `${inputRef.current.scrollHeight}px`;
+    }
+  }, [input]);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -113,6 +123,8 @@ export function ChatInput({ onSendMessage, isLoading, placeholder }: ChatInputPr
       handleSubmit(e as unknown as FormEvent);
     }
   };
+  
+  const isAttachmentDisabled = isLoading || !!file || (activeTool !== 'summarize' && activeTool !== 'meeting-summarizer');
 
   return (
     <div className="p-4 border-t bg-background shrink-0">
@@ -133,7 +145,8 @@ export function ChatInput({ onSendMessage, isLoading, placeholder }: ChatInputPr
               size="icon"
               variant="ghost"
               onClick={handleAttachmentClick}
-              disabled={isLoading || !!file}
+              disabled={isAttachmentDisabled}
+              title={isAttachmentDisabled ? "File attachment is only available for Summarizer and Meeting Summarizer tools." : "Attach file"}
             >
               <Paperclip className="w-4 h-4" />
               <span className="sr-only">Attach file</span>
@@ -147,7 +160,7 @@ export function ChatInput({ onSendMessage, isLoading, placeholder }: ChatInputPr
           onKeyDown={handleKeyDown}
           placeholder={placeholder || "Type your message here or use the microphone..."}
           className={cn(
-            'flex-1 resize-none pr-24 pl-12 transition-shadow duration-300',
+            'flex-1 resize-none pr-24 pl-12 transition-shadow duration-300 max-h-48',
             input.length > 0 && 'focus-visible:animate-pulse-border'
             )}
           rows={1}
