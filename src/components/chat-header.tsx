@@ -10,7 +10,7 @@ interface ChatHeaderProps {
 
 export function ChatHeader({ onGeneratePdf, onGeneratePpt }: ChatHeaderProps) {
   return (
-    <header className="flex items-center h-16 shrink-0 justify-between px-4 border-b">
+    <header className="flex items-center h-16 shrink-0 justify-between px-4 border-b shadow-sm">
       <div className="flex items-center gap-2">
         <SidebarTrigger className="md:hidden" />
         <h2 className="text-lg font-semibold">Conversation</h2>
@@ -29,3 +29,5 @@ export function ChatHeader({ onGeneratePdf, onGeneratePpt }: ChatHeaderProps) {
     </header>
   );
 }
+
+    
