@@ -1,4 +1,3 @@
-
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
@@ -6,8 +5,8 @@ import { cn } from '@/lib/utils';
 import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
-  title: 'Yadi AI Chat',
-  description: 'An AI-powered chat application for seamless conversations.',
+  title: 'Yadi AI - Your Advanced AI Assistant',
+  description: 'An intelligent, multi-tool AI assistant for chat, summarization, email drafting, translation, academic help, professional writing, and image creation.',
 };
 
 export default function RootLayout({

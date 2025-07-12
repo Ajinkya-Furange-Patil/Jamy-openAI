@@ -1,8 +1,7 @@
-
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Plus, LogOut, User, Settings, Presentation, FileText, NotebookText, Mail, Languages, GraduationCap, ClipboardEdit, Briefcase, PenSquare, Paperclip, MessageSquare } from 'lucide-react';
+import { useState, useEffect, useLayoutEffect } from 'react';
+import { Plus, LogOut, User, Settings, NotebookText, Mail, Languages, GraduationCap, ClipboardEdit, Briefcase, PenSquare, Paperclip, MessageSquare, Image as ImageIcon } from 'lucide-react';
 
 import {
   SidebarProvider,
@@ -35,12 +34,13 @@ import { AudioPlayer } from './audio-player';
 import { Badge } from './ui/badge';
 import { SettingsDialog } from './settings-dialog';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 const initialMessages: Message[] = [
   {
     id: '1',
     role: 'assistant',
-    content: "Hello there! I'm Yadi AI, your friendly assistant. How can I help you today? Feel free to select a specialized tool or just start chatting.",
+    text: "Hello there! I'm Yadi AI, your friendly assistant. How can I help you today? Feel free to select a specialized tool or just start chatting.",
   },
 ];
 
@@ -52,18 +52,20 @@ const toolPlaceholders: Record<Tool, string> = {
     'homework-helper': 'Ask a question about your homework...',
     'research-assistant': 'What topic do you need help researching?',
     'meeting-summarizer': 'Paste the meeting transcript or attach a file to summarize.',
-    'report-writer': 'Describe the report you need. For example, "Write a quarterly sales report..."'
+    'report-writer': 'Describe the report you need. For example, "Write a quarterly sales report..."',
+    'image-creator': 'Describe the image you want to create. e.g., "A photo of a Corgi wearing a chef hat"',
 };
 
 const toolInitialMessages: Record<Tool, Message[]> = {
     chat: initialMessages,
-    summarize: [{ id: '1', role: 'assistant', content: 'Welcome to the Summarizer tool. Please attach a text file (.txt) and I will provide a concise summary for you.' }],
-    email: [{ id: '1', role: 'assistant', content: 'Welcome to the Email Assistant. Tell me what kind of email you need to write, and I\'ll draft it for you.' }],
-    translate: [{ id: '1', role: 'assistant', content: 'Welcome to the Language Translator. Enter any text and I will translate it for you.' }],
-    'homework-helper': [{ id: '1', role: 'assistant', content: 'Welcome to the Homework Helper. How can I assist you with your assignments?' }],
-    'research-assistant': [{ id: '1', role: 'assistant', content: 'Welcome to the Research Assistant. What information are you looking for today?' }],
-    'meeting-summarizer': [{ id: '1', role: 'assistant', content: 'Welcome to the Meeting Summarizer. You can paste a transcript or upload a file to get started.' }],
-    'report-writer': [{ id: '1', role: 'assistant', content: 'Welcome to the Report Writer. Describe the report you need, and I will help you create it.' }],
+    summarize: [{ id: '1', role: 'assistant', text: 'Welcome to the Summarizer tool. Please attach a text file (.txt) and I will provide a concise summary for you.' }],
+    email: [{ id: '1', role: 'assistant', text: 'Welcome to the Email Assistant. Tell me what kind of email you need to write, and I\'ll draft it for you.' }],
+    translate: [{ id: '1', role: 'assistant', text: 'Welcome to the Language Translator. Enter any text and I will translate it for you.' }],
+    'homework-helper': [{ id: '1', role: 'assistant', text: 'Welcome to the Homework Helper. How can I assist you with your assignments?' }],
+    'research-assistant': [{ id: '1', role: 'assistant', text: 'Welcome to the Research Assistant. What information are you looking for today?' }],
+    'meeting-summarizer': [{ id: '1', role: 'assistant', text: 'Welcome to the Meeting Summarizer. You can paste a transcript or upload a file to get started.' }],
+    'report-writer': [{ id: '1', role: 'assistant', text: 'Welcome to the Report Writer. Describe the report you need, and I will help you create it.' }],
+    'image-creator': [{ id: '1', role: 'assistant', text: 'Welcome to the Image Creator. Describe any image you can imagine, and I will bring it to life!' }],
 };
 
 
@@ -112,18 +114,17 @@ export function ChatPage() {
     });
   }
 
-
   const handleSendMessage = async (input: string, file?: File) => {
     if (isLoading || (!input.trim() && !file)) return;
   
-    let messageContent: React.ReactNode = input;
+    let messageText: React.ReactNode = input;
     let documentText: string | undefined;
 
     if ((activeTool === 'summarize' || activeTool === 'meeting-summarizer') && !file && !input.trim()) {
         toast({
             variant: 'destructive',
             title: 'Input Required',
-            description: `The ${activeTool} tool requires a file or text to be provided.`,
+            description: `This tool requires a file or text to be provided.`,
         });
         return;
     }
@@ -144,7 +145,7 @@ export function ChatPage() {
         toast({
             variant: 'destructive',
             title: 'Unsupported File Type',
-            description: 'Currently, only plain text files (.txt) are supported.',
+            description: 'Currently, only plain text files (.txt) are supported for this tool.',
         });
         return;
       }
@@ -155,7 +156,7 @@ export function ChatPage() {
           <span className="truncate">{file.name}</span>
         </Badge>
       );
-      messageContent = (
+      messageText = (
         <div className="flex flex-col gap-2">
           {input && <span>{input}</span>}
           {fileBadge}
@@ -166,7 +167,7 @@ export function ChatPage() {
     const userMessage: Message = {
       id: String(Date.now()),
       role: 'user',
-      content: messageContent || "Processing file...", // Show placeholder if no text
+      text: messageText || "Processing file...", // Show placeholder if no text
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -192,7 +193,8 @@ export function ChatPage() {
       const aiMessage: Message = {
         id: String(Date.now() + 1),
         role: 'assistant',
-        content: result.aiResponse,
+        text: result.aiResponse,
+        content: result.aiResponseContent
       };
       setMessages((prev) => [...prev, aiMessage]);
     }
@@ -282,6 +284,17 @@ export function ChatPage() {
             </SidebarMenuItem>
             <SidebarGroup className="px-0 pt-4 pb-2">
               <SidebarGroupLabel>Tools</SidebarGroupLabel>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => handleToolChange('image-creator')}
+                  isActive={activeTool === 'image-creator'}
+                  tooltip={{ children: 'Image Creator', side: 'right' }}
+                  className="w-full"
+                >
+                  <ImageIcon className="size-4" />
+                  <span>Image Creator</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => handleToolChange('summarize')}
@@ -392,7 +405,7 @@ export function ChatPage() {
             activeTool={activeTool}
             key={activeTool}
           />
-          {audioUrl && <AudioPlayer audioUrl={audioUrl} />}
+          {audioUrl && <AudioUrlProvider audioUrl={audioUrl} />}
         </SidebarInset>
       </SidebarProvider>
       <SettingsDialog
@@ -403,4 +416,16 @@ export function ChatPage() {
       />
     </>
   );
+}
+
+function AudioUrlProvider({ audioUrl }: { audioUrl: string }) {
+  const [url, setUrl] = useState(audioUrl);
+
+  useEffect(() => {
+    setUrl(audioUrl);
+  }, [audioUrl]);
+
+  if (!url) return null;
+
+  return <AudioPlayer audioUrl={url} />;
 }

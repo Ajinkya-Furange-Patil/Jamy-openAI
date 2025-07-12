@@ -3,7 +3,8 @@ import type { ReactNode } from 'react';
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
-  content: ReactNode;
+  text: ReactNode;
+  content?: ReactNode;
   audioUrl?: string;
 }
 
@@ -15,4 +16,5 @@ export type Tool =
   | 'homework-helper'
   | 'research-assistant'
   | 'meeting-summarizer'
-  | 'report-writer';
+  | 'report-writer'
+  | 'image-creator';

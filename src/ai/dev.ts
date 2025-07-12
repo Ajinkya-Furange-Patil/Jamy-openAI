@@ -1,3 +1,5 @@
+'use server';
+
 import { config } from 'dotenv';
 config();
 
@@ -11,3 +13,4 @@ import '@/ai/flows/homework-helper.ts';
 import '@/ai/flows/research-assistant.ts';
 import '@/ai/flows/meeting-summarizer.ts';
 import '@/ai/flows/report-writer.ts';
+import '@/ai/flows/image-creator.ts';
