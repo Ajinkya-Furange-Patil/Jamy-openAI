@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, LogOut, User, Settings, Presentation } from 'lucide-react';
+import { Plus, LogOut, User, Settings, Presentation, FileText, NotebookText } from 'lucide-react';
 
 import {
   SidebarProvider,
@@ -14,6 +14,8 @@ import {
   SidebarInset,
   SidebarFooter,
   SidebarSeparator,
+  SidebarGroup,
+  SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { ChatHeader } from '@/components/chat-header';
 import { ChatMessages } from '@/components/chat-messages';
@@ -109,6 +111,13 @@ export function ChatPage() {
       description: 'Settings are not yet implemented.',
     });
   };
+  
+  const handleSummarize = () => {
+    toast({
+      title: 'Summarize Document',
+      description: 'Document summarization is not yet implemented in the UI.',
+    });
+  };
 
   const UserProfile = () => {
     if (!isLoggedIn) {
@@ -195,6 +204,19 @@ export function ChatPage() {
               <span>New Conversation</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
+          <SidebarGroup className="px-0 pt-4 pb-2">
+            <SidebarGroupLabel>Tools</SidebarGroupLabel>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={handleSummarize}
+                tooltip={{ children: 'Summarize Document', side: 'right' }}
+                className="w-full"
+              >
+                <NotebookText className="size-4" />
+                <span>Summarize</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarGroup>
         </SidebarMenu>
         <SidebarSeparator />
         <SidebarFooter className="p-2">
