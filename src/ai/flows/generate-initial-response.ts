@@ -13,6 +13,7 @@ import {z} from 'genkit';
 
 const GenerateInitialResponseInputSchema = z.object({
   prompt: z.string().describe('The prompt from the user to generate a response.'),
+  customInstructions: z.string().optional().describe('Custom instructions for the AI persona.'),
 });
 export type GenerateInitialResponseInput = z.infer<typeof GenerateInitialResponseInputSchema>;
 
@@ -29,7 +30,15 @@ const generateInitialResponsePrompt = ai.definePrompt({
   name: 'generateInitialResponsePrompt',
   input: {schema: GenerateInitialResponseInputSchema},
   output: {schema: GenerateInitialResponseOutputSchema},
-  prompt: `You are Yadi AI, a helpful AI assistant.  Please respond to the following prompt from the user:  {{prompt}}`,
+  prompt: `You are Yadi AI, a helpful AI assistant. {{#if customInstructions}}
+
+The user has provided the following custom instructions for you to follow:
+---
+{{customInstructions}}
+---
+{{/if}}
+
+Please respond to the following prompt from the user:  {{prompt}}`,
 });
 
 const generateInitialResponseFlow = ai.defineFlow(

@@ -14,6 +14,7 @@ import {z} from 'genkit';
 const MaintainConversationContextInputSchema = z.object({
   userMessage: z.string().describe('The message from the user.'),
   conversationHistory: z.string().describe('The history of the conversation.'),
+  customInstructions: z.string().optional().describe('Custom instructions for the AI persona.'),
 });
 export type MaintainConversationContextInput = z.infer<
   typeof MaintainConversationContextInputSchema
@@ -40,6 +41,13 @@ const prompt = ai.definePrompt({
   input: {schema: MaintainConversationContextInputSchema},
   output: {schema: MaintainConversationContextOutputSchema},
   prompt: `You are Yadi, an AI assistant. Maintain context throughout the conversation.
+{{#if customInstructions}}
+
+The user has provided the following custom instructions for you to follow:
+---
+{{customInstructions}}
+---
+{{/if}}
 
 Conversation History:
 {{conversationHistory}}

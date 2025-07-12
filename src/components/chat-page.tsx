@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, LogOut, User, Settings, Presentation, FileText, NotebookText, Mail, Languages, GraduationCap, ClipboardEdit, Briefcase, PenSquare, Paperclip, MessageSquare } from 'lucide-react';
 
 import {
@@ -74,7 +74,15 @@ export function ChatPage() {
   const [audioUrl, setAudioUrl] = useState<string>('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeTool, setActiveTool] = useState<Tool>('chat');
+  const [customInstructions, setCustomInstructions] = useState('');
   const { toast } = useToast();
+
+  useEffect(() => {
+    const storedInstructions = localStorage.getItem('customInstructions');
+    if (storedInstructions) {
+      setCustomInstructions(storedInstructions);
+    }
+  }, []);
 
   const handleNewConversation = () => {
     setMessages(toolInitialMessages[activeTool] || initialMessages);
@@ -164,7 +172,7 @@ export function ChatPage() {
     setIsLoading(true);
     setAudioUrl('');
 
-    const result = await sendMessage(history, input, documentText, activeTool);
+    const result = await sendMessage(history, input, documentText, activeTool, customInstructions);
     
     setIsLoading(false);
 
@@ -407,6 +415,7 @@ export function ChatPage() {
         open={isSettingsOpen}
         onOpenChange={setIsSettingsOpen}
         onClearHistory={handleNewConversation}
+        onCustomInstructionsChange={setCustomInstructions}
       />
     </>
   );

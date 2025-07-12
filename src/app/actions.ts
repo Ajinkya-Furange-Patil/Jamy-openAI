@@ -16,7 +16,8 @@ export async function sendMessage(
   history: string,
   message: string,
   documentText?: string,
-  activeTool: Tool = 'chat'
+  activeTool: Tool = 'chat',
+  customInstructions?: string,
 ) {
   try {
     let aiResponseText: string | null = null;
@@ -58,11 +59,12 @@ export async function sendMessage(
           const result = await maintainConversationContext({
             userMessage: message,
             conversationHistory: history,
+            customInstructions,
           });
           aiResponseText = result.aiResponse;
           updatedHistory = result.updatedConversationHistory;
         } else {
-          const result = await generateInitialResponse({prompt: message});
+          const result = await generateInitialResponse({prompt: message, customInstructions});
           aiResponseText = result.response;
           updatedHistory = `User: ${message}\nAI: ${result.response}`;
         }
