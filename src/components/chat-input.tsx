@@ -1,20 +1,23 @@
 'use client';
 
-import { useState, useRef, type FormEvent, useEffect } from 'react';
+import { useState, useRef, type FormEvent, useEffect, ChangeEvent } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Send, Mic, Loader2 } from 'lucide-react';
+import { Send, Mic, Loader2, Paperclip, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Badge } from './ui/badge';
 
 interface ChatInputProps {
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: string, file?: { dataUri: string; name: string }) => void;
   isLoading: boolean;
 }
 
 export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
   const [input, setInput] = useState('');
+  const [file, setFile] = useState<{ dataUri: string; name: string } | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
@@ -42,10 +45,9 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
         console.error('Speech recognition error:', event.error);
         setIsRecording(false);
       };
-      
+
       recognitionRef.current.onend = () => {
         if (isRecording) {
-            // If it ends unexpectedly, restart it.
             recognitionRef.current?.start();
         }
       };
@@ -53,7 +55,7 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
 
     return () => {
         if (recognitionRef.current) {
-            recognitionRef.current.onend = null; // prevent restart on unmount
+            recognitionRef.current.onend = null;
             recognitionRef.current.stop();
         }
     };
@@ -70,15 +72,43 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
     }
   };
 
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      const reader = new FileReader();
+      reader.onload = (loadEvent) => {
+        setFile({
+          dataUri: loadEvent.target?.result as string,
+          name: selectedFile.name,
+        });
+      };
+      reader.readAsDataURL(selectedFile);
+    }
+  };
+
+  const handleAttachmentClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const removeFile = () => {
+    setFile(null);
+    if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+    }
+  };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
-    onSendMessage(input);
+    if (!input.trim() && !file) return;
+    onSendMessage(input, file ?? undefined);
     setInput('');
+    setFile(null);
     if(isRecording) {
         setIsRecording(false);
         recognitionRef.current?.stop();
+    }
+    if (fileInputRef.current) {
+        fileInputRef.current.value = '';
     }
     inputRef.current?.focus();
   };
@@ -96,6 +126,25 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
         onSubmit={handleSubmit}
         className="relative flex items-start gap-4"
       >
+        <div className="absolute left-2 top-1/2 -translate-y-1/2">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              onClick={handleAttachmentClick}
+              disabled={isLoading || !!file}
+            >
+              <Paperclip className="w-4 h-4" />
+              <span className="sr-only">Attach file</span>
+            </Button>
+        </div>
+
         <Textarea
           ref={inputRef}
           value={input}
@@ -103,13 +152,30 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
           onKeyDown={handleKeyDown}
           placeholder="Type your message here or use the microphone..."
           className={cn(
-            'flex-1 resize-none pr-24 transition-shadow duration-300',
+            'flex-1 resize-none pr-24 pl-12 transition-shadow duration-300',
             input.length > 0 && 'focus-visible:animate-pulse-border'
             )}
           rows={1}
           disabled={isLoading}
           autoFocus
         />
+
+        {file && (
+          <div className="absolute bottom-full left-0 mb-2">
+            <Badge variant="secondary" className="flex items-center gap-2">
+              <span>{file.name}</span>
+              <button
+                type="button"
+                onClick={removeFile}
+                className="rounded-full hover:bg-muted-foreground/20 p-0.5"
+                aria-label="Remove file"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          </div>
+        )}
+
         <Button
           type="button"
           size="icon"
@@ -124,7 +190,7 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
         <Button
           type="submit"
           size="icon"
-          disabled={isLoading || !input.trim()}
+          disabled={isLoading || (!input.trim() && !file)}
           className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
         >
           {isLoading ? (

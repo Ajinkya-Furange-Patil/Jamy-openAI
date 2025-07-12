@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, LogOut, User, Settings, Presentation, FileText, NotebookText, Mail, Languages, GraduationCap, ClipboardEdit, Briefcase, PenSquare } from 'lucide-react';
+import { Plus, LogOut, User, Settings, Presentation, FileText, NotebookText, Mail, Languages, GraduationCap, ClipboardEdit, Briefcase, PenSquare, Paperclip } from 'lucide-react';
 
 import {
   SidebarProvider,
@@ -32,6 +32,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { AudioPlayer } from './audio-player';
+import { Badge } from './ui/badge';
 
 const initialMessages: Message[] = [
   {
@@ -55,19 +56,36 @@ export function ChatPage() {
     setAudioUrl('');
   };
 
-  const handleSendMessage = async (input: string) => {
-    if (isLoading || !input.trim()) return;
+  const handleSendMessage = async (input: string, file?: { dataUri: string; name: string }) => {
+    if (isLoading || (!input.trim() && !file)) return;
+  
+    let messageContent: React.ReactNode = input;
+    if (file) {
+      const fileBadge = (
+        <Badge variant="outline" className="flex items-center gap-2 max-w-xs">
+          <Paperclip className="h-4 w-4" />
+          <span className="truncate">{file.name}</span>
+        </Badge>
+      );
+      messageContent = (
+        <div className="flex flex-col gap-2">
+          {input && <span>{input}</span>}
+          {fileBadge}
+        </div>
+      );
+    }
 
     const userMessage: Message = {
       id: String(Date.now()),
       role: 'user',
-      content: input,
+      content: messageContent,
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
     setAudioUrl('');
 
+    // TODO: Pass file to the backend action. For now, we only pass the text.
     const result = await sendMessage(history, input);
     
     setIsLoading(false);
@@ -78,6 +96,8 @@ export function ChatPage() {
         title: 'Error',
         description: result.error,
       });
+      // Revert optimistic UI update on error
+      setMessages(prev => prev.slice(0, -1));
       return;
     }
 
