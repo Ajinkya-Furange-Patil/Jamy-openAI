@@ -8,13 +8,13 @@ import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
 
 interface ChatInputProps {
-  onSendMessage: (message: string, file?: { dataUri: string; name: string }) => void;
+  onSendMessage: (message: string, file?: File) => void;
   isLoading: boolean;
 }
 
 export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
   const [input, setInput] = useState('');
-  const [file, setFile] = useState<{ dataUri: string; name: string } | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -75,14 +75,7 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      const reader = new FileReader();
-      reader.onload = (loadEvent) => {
-        setFile({
-          dataUri: loadEvent.target?.result as string,
-          name: selectedFile.name,
-        });
-      };
-      reader.readAsDataURL(selectedFile);
+        setFile(selectedFile);
     }
   };
 
@@ -132,6 +125,7 @@ export function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
               ref={fileInputRef}
               onChange={handleFileChange}
               className="hidden"
+              accept="text/plain"
             />
             <Button
               type="button"

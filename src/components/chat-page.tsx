@@ -39,7 +39,7 @@ const initialMessages: Message[] = [
   {
     id: '1',
     role: 'assistant',
-    content: "Hello! I'm Yadi AI. How can I assist you today?",
+    content: "Hello! I'm Yadi AI. How can I assist you today? You can ask me questions or upload a document for summarization.",
   },
 ];
 
@@ -58,11 +58,48 @@ export function ChatPage() {
     setAudioUrl('');
   };
 
-  const handleSendMessage = async (input: string, file?: { dataUri: string; name: string }) => {
+  const fileToText = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const text = reader.result as string;
+            resolve(text);
+        };
+        reader.onerror = (error) => {
+            reject(error);
+        };
+        reader.readAsText(file);
+    });
+  }
+
+
+  const handleSendMessage = async (input: string, file?: File) => {
     if (isLoading || (!input.trim() && !file)) return;
   
     let messageContent: React.ReactNode = input;
+    let documentText: string | undefined;
+
     if (file) {
+      if (file.type.startsWith('text/')) {
+        try {
+          documentText = await fileToText(file);
+        } catch (error) {
+           toast({
+            variant: 'destructive',
+            title: 'Error reading file',
+            description: 'Could not read the text from the uploaded file.',
+          });
+          return;
+        }
+      } else {
+        toast({
+            variant: 'destructive',
+            title: 'Unsupported File Type',
+            description: 'Currently, only plain text files (.txt) are supported for summarization.',
+        });
+        return;
+      }
+      
       const fileBadge = (
         <Badge variant="outline" className="flex items-center gap-2 max-w-xs">
           <Paperclip className="h-4 w-4" />
@@ -87,8 +124,7 @@ export function ChatPage() {
     setIsLoading(true);
     setAudioUrl('');
 
-    // TODO: Pass file to the backend action. For now, we only pass the text.
-    const result = await sendMessage(history, input);
+    const result = await sendMessage(history, input, documentText);
     
     setIsLoading(false);
 
@@ -138,7 +174,7 @@ export function ChatPage() {
   const handleSummarize = () => {
     toast({
       title: 'Summarize Document',
-      description: 'Document summarization is not yet implemented in the UI.',
+      description: 'To summarize, please attach a .txt file using the paperclip icon in the chat input.',
     });
   };
 
