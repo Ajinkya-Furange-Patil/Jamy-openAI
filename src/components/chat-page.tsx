@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { AudioPlayer } from './audio-player';
 import { Badge } from './ui/badge';
+import { SettingsDialog } from './settings-dialog';
 
 const initialMessages: Message[] = [
   {
@@ -48,6 +49,7 @@ export function ChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(true);
   const [audioUrl, setAudioUrl] = useState<string>('');
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { toast } = useToast();
 
   const handleNewConversation = () => {
@@ -130,13 +132,6 @@ export function ChatPage() {
     toast({
       title: 'Generate PPT',
       description: 'PPT generation is not yet implemented.',
-    });
-  };
-  
-  const handleSettings = () => {
-    toast({
-      title: 'Settings',
-      description: 'Settings are not yet implemented.',
     });
   };
   
@@ -227,138 +222,145 @@ export function ChatPage() {
   };
 
   return (
-    <SidebarProvider>
-      <Sidebar side="left" collapsible="icon" variant="sidebar">
-        <SidebarHeader className="p-2">
-          <div className="flex items-center gap-2 p-2">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="size-8 text-primary shrink-0"
-            >
-              <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M2 7L12 12L22 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M12 12V22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M17 4.5L7 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span className="text-xl font-semibold">Yadi AI</span>
-          </div>
-        </SidebarHeader>
-        <SidebarMenu className="p-2 flex-1">
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={handleNewConversation}
-              tooltip={{ children: 'New Conversation', side: 'right' }}
-              className="w-full"
-            >
-              <Plus className="size-4" />
-              <span>New Conversation</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarGroup className="px-0 pt-4 pb-2">
-            <SidebarGroupLabel>Tools</SidebarGroupLabel>
+    <>
+      <SidebarProvider>
+        <Sidebar side="left" collapsible="icon" variant="sidebar">
+          <SidebarHeader className="p-2">
+            <div className="flex items-center gap-2 p-2">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="size-8 text-primary shrink-0"
+              >
+                <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M2 7L12 12L22 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M12 12V22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M17 4.5L7 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="text-xl font-semibold">Yadi AI</span>
+            </div>
+          </SidebarHeader>
+          <SidebarMenu className="p-2 flex-1">
             <SidebarMenuItem>
               <SidebarMenuButton
-                onClick={handleSummarize}
-                tooltip={{ children: 'Summarize Document', side: 'right' }}
+                onClick={handleNewConversation}
+                tooltip={{ children: 'New Conversation', side: 'right' }}
                 className="w-full"
               >
-                <NotebookText className="size-4" />
-                <span>Summarize</span>
+                <Plus className="size-4" />
+                <span>New Conversation</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            <SidebarGroup className="px-0 pt-4 pb-2">
+              <SidebarGroupLabel>Tools</SidebarGroupLabel>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={handleSummarize}
+                  tooltip={{ children: 'Summarize Document', side: 'right' }}
+                  className="w-full"
+                >
+                  <NotebookText className="size-4" />
+                  <span>Summarize</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={handleEmailAssistant}
+                  tooltip={{ children: 'Email Assistant', side: 'right' }}
+                  className="w-full"
+                >
+                  <Mail className="size-4" />
+                  <span>Email Assistant</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={handleTranslate}
+                  tooltip={{ children: 'Language Translator', side: 'right' }}
+                  className="w-full"
+                >
+                  <Languages className="size-4" />
+                  <span>Translator</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarGroup>
+            <SidebarGroup className="px-0 pt-2 pb-2">
+              <SidebarGroupLabel>For Students</SidebarGroupLabel>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={handleHomeworkHelper}
+                  tooltip={{ children: 'Homework Helper', side: 'right' }}
+                  className="w-full"
+                >
+                  <ClipboardEdit className="size-4" />
+                  <span>Homework Helper</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={handleResearchAssistant}
+                  tooltip={{ children: 'Research Assistant', side: 'right' }}
+                  className="w-full"
+                >
+                  <GraduationCap className="size-4" />
+                  <span>Research Assistant</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarGroup>
+            <SidebarGroup className="px-0 pt-2 pb-2">
+              <SidebarGroupLabel>For Professionals</SidebarGroupLabel>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={handleMeetingSummarizer}
+                  tooltip={{ children: 'Meeting Summarizer', side: 'right' }}
+                  className="w-full"
+                >
+                  <Briefcase className="size-4" />
+                  <span>Meeting Summarizer</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={handleReportWriter}
+                  tooltip={{ children: 'Report Writer', side: 'right' }}
+                  className="w-full"
+                >
+                  <PenSquare className="size-4" />
+                  <span>Report Writer</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarGroup>
+          </SidebarMenu>
+          <SidebarSeparator />
+          <SidebarFooter className="p-2">
             <SidebarMenuItem>
               <SidebarMenuButton
-                onClick={handleEmailAssistant}
-                tooltip={{ children: 'Email Assistant', side: 'right' }}
+                onClick={() => setIsSettingsOpen(true)}
+                tooltip={{ children: 'Settings', side: 'right' }}
                 className="w-full"
               >
-                <Mail className="size-4" />
-                <span>Email Assistant</span>
+                <Settings className="size-4" />
+                <span>Settings</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={handleTranslate}
-                tooltip={{ children: 'Language Translator', side: 'right' }}
-                className="w-full"
-              >
-                <Languages className="size-4" />
-                <span>Translator</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarGroup>
-          <SidebarGroup className="px-0 pt-2 pb-2">
-            <SidebarGroupLabel>For Students</SidebarGroupLabel>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={handleHomeworkHelper}
-                tooltip={{ children: 'Homework Helper', side: 'right' }}
-                className="w-full"
-              >
-                <ClipboardEdit className="size-4" />
-                <span>Homework Helper</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={handleResearchAssistant}
-                tooltip={{ children: 'Research Assistant', side: 'right' }}
-                className="w-full"
-              >
-                <GraduationCap className="size-4" />
-                <span>Research Assistant</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarGroup>
-          <SidebarGroup className="px-0 pt-2 pb-2">
-            <SidebarGroupLabel>For Professionals</SidebarGroupLabel>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={handleMeetingSummarizer}
-                tooltip={{ children: 'Meeting Summarizer', side: 'right' }}
-                className="w-full"
-              >
-                <Briefcase className="size-4" />
-                <span>Meeting Summarizer</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={handleReportWriter}
-                tooltip={{ children: 'Report Writer', side: 'right' }}
-                className="w-full"
-              >
-                <PenSquare className="size-4" />
-                <span>Report Writer</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarGroup>
-        </SidebarMenu>
-        <SidebarSeparator />
-        <SidebarFooter className="p-2">
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={handleSettings}
-              tooltip={{ children: 'Settings', side: 'right' }}
-              className="w-full"
-            >
-              <Settings className="size-4" />
-              <span>Settings</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <UserProfile />
-        </SidebarFooter>
-      </Sidebar>
-      <SidebarInset className="flex flex-col h-[100svh]">
-        <ChatHeader onGeneratePdf={handleGeneratePdf} onGeneratePpt={handleGeneratePpt} />
-        <ChatMessages messages={messages} isLoading={isLoading} />
-        <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
-        {audioUrl && <AudioPlayer audioUrl={audioUrl} />}
-      </SidebarInset>
-    </SidebarProvider>
+            <UserProfile />
+          </SidebarFooter>
+        </Sidebar>
+        <SidebarInset className="flex flex-col h-[100svh]">
+          <ChatHeader onGeneratePdf={handleGeneratePdf} onGeneratePpt={handleGeneratePpt} />
+          <ChatMessages messages={messages} isLoading={isLoading} />
+          <ChatInput onSendMessage={handleSendMessage} isLoading={isLoading} />
+          {audioUrl && <AudioPlayer audioUrl={audioUrl} />}
+        </SidebarInset>
+      </SidebarProvider>
+      <SettingsDialog
+        open={isSettingsOpen}
+        onOpenChange={setIsSettingsOpen}
+        onClearHistory={handleNewConversation}
+      />
+    </>
   );
 }
