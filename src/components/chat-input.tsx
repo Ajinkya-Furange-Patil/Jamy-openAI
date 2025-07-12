@@ -27,7 +27,10 @@ export function ChatInput({ onSendMessage, isLoading, placeholder, activeTool }:
     // Auto-resize textarea
     if (inputRef.current) {
       inputRef.current.style.height = 'auto';
-      inputRef.current.style.height = `${inputRef.current.scrollHeight}px`;
+      const scrollHeight = inputRef.current.scrollHeight;
+      if (scrollHeight > 0) {
+        inputRef.current.style.height = `${scrollHeight}px`;
+      }
     }
   }, [input]);
 
@@ -114,7 +117,10 @@ export function ChatInput({ onSendMessage, isLoading, placeholder, activeTool }:
     if (fileInputRef.current) {
         fileInputRef.current.value = '';
     }
-    inputRef.current?.focus();
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+      inputRef.current.focus();
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -161,7 +167,7 @@ export function ChatInput({ onSendMessage, isLoading, placeholder, activeTool }:
           placeholder={placeholder || "Type your message here or use the microphone..."}
           className={cn(
             'flex-1 resize-none pr-24 pl-12 transition-shadow duration-300 max-h-48',
-            input.length > 0 && 'focus-visible:animate-pulse-border'
+            'focus-visible:animate-pulse-border'
             )}
           rows={1}
           disabled={isLoading}
@@ -174,7 +180,7 @@ export function ChatInput({ onSendMessage, isLoading, placeholder, activeTool }:
               <span>{file.name}</span>
               <button
                 type="button"
-                onClick={removeFile}
+onClick={removeFile}
                 className="rounded-full hover:bg-muted-foreground/20 p-0.5"
                 aria-label="Remove file"
               >

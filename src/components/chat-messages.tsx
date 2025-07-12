@@ -42,7 +42,7 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
             )}
             <div
               className={cn(
-                'max-w-sm md:max-w-md rounded-lg px-4 py-3 shadow-md transition-all hover:shadow-lg hover:-translate-y-1',
+                'max-w-sm md:max-w-md rounded-lg px-4 py-3 shadow-md transition-all duration-300 ease-out hover:shadow-lg hover:-translate-y-1 hover:shadow-primary/20',
                 message.role === 'user'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-muted'
