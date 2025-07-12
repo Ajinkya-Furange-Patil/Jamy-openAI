@@ -30,7 +30,7 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
           <div
             key={message.id}
             className={cn(
-              'flex items-start gap-3 w-full',
+              'flex items-start gap-3 w-full fade-in',
               message.role === 'user' ? 'justify-end' : 'justify-start'
             )}
           >
@@ -61,7 +61,7 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
           </div>
         ))}
         {isLoading && (
-           <div className="flex items-start gap-3 w-full justify-start">
+           <div className="flex items-start gap-3 w-full justify-start fade-in">
               <Avatar className="w-8 h-8 border shrink-0">
                 <AvatarFallback className="bg-background">
                   <Bot className="text-primary" />
