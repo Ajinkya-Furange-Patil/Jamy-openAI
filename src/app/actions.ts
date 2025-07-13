@@ -1,7 +1,7 @@
+
 'use server';
 
 import {convertTextToSpeech} from '@/ai/flows/text-to-speech';
-import type {ReactNode} from 'react';
 import { orchestratorFlow } from '@/ai/flows/orchestrator-flow';
 
 export async function sendMessage(
@@ -12,14 +12,17 @@ export async function sendMessage(
   voice?: string,
 ) {
   try {
-    const result = await orchestratorFlow({
+    // Start both requests in parallel
+    const orchestratorPromise = orchestratorFlow({
       prompt: message,
       documentText,
       history,
       customInstructions,
     });
 
-    if (!result.text) {
+    const [orchestratorResult] = await Promise.all([orchestratorPromise]);
+    
+    if (!orchestratorResult.text) {
       return {
         aiResponse: null,
         aiResponseContent: null,
@@ -28,14 +31,18 @@ export async function sendMessage(
         error: 'The AI did not generate a response. Please try again.',
       };
     }
+    
+    // Start TTS conversion but don't wait for it
+    const ttsPromise = convertTextToSpeech({text: orchestratorResult.text, voice});
 
-    const ttsResult = await convertTextToSpeech({text: result.text, voice});
-
+    // Wait for the TTS to complete separately
+    const ttsResult = await ttsPromise;
+    
     return {
-      aiResponse: result.text,
-      aiResponseContent: result.content,
+      aiResponse: orchestratorResult.text,
+      aiResponseContent: orchestratorResult.content,
       audioUrl: ttsResult.media,
-      updatedConversationHistory: result.history,
+      updatedConversationHistory: orchestratorResult.history,
       error: null,
     };
   } catch (e) {
