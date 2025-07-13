@@ -57,6 +57,10 @@ export function ChatInput({ onSendMessage, isLoading, placeholder }: ChatInputPr
         console.error('Speech recognition error:', event.error);
         setIsRecording(false);
       };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
       
       recognitionRef.current = recognition;
     }
@@ -71,7 +75,6 @@ export function ChatInput({ onSendMessage, isLoading, placeholder }: ChatInputPr
   const handleMicClick = () => {
     if (isRecording) {
       recognitionRef.current?.stop();
-      setIsRecording(false);
     } else {
       recognitionRef.current?.start();
       setIsRecording(true);
@@ -104,7 +107,6 @@ export function ChatInput({ onSendMessage, isLoading, placeholder }: ChatInputPr
     setFile(null);
     if(isRecording) {
         recognitionRef.current?.stop();
-        setIsRecording(false);
     }
     if (fileInputRef.current) {
         fileInputRef.current.value = '';
