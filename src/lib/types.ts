@@ -7,14 +7,3 @@ export interface Message {
   content?: ReactNode;
   audioUrl?: string;
 }
-
-export type Tool =
-  | 'chat'
-  | 'summarize'
-  | 'email'
-  | 'translate'
-  | 'homework-helper'
-  | 'research-assistant'
-  | 'meeting-summarizer'
-  | 'report-writer'
-  | 'image-creator';

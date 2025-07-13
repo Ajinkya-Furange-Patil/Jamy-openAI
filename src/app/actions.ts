@@ -8,7 +8,8 @@ export async function sendMessage(
   history: string,
   message: string,
   documentText?: string,
-  customInstructions?: string
+  customInstructions?: string,
+  voice?: string,
 ) {
   try {
     const result = await orchestratorFlow({
@@ -28,7 +29,7 @@ export async function sendMessage(
       };
     }
 
-    const ttsResult = await convertTextToSpeech(result.text);
+    const ttsResult = await convertTextToSpeech({text: result.text, voice});
 
     return {
       aiResponse: result.text,

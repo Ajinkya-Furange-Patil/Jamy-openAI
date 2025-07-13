@@ -11,46 +11,47 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
 import { Textarea } from './ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 interface SettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onClearHistory: () => void;
   onCustomInstructionsChange: (instructions: string) => void;
+  onVoiceChange: (voice: string) => void;
 }
+
+const voices = [
+  { value: 'Algenib', label: 'Algenib (Male, US)' },
+  { value: 'Enif', label: 'Enif (Female, US)' },
+  { value: 'Sirius', label: 'Sirius (Male, UK)' },
+  { value: 'Spica', label: 'Spica (Female, UK)' },
+  { value: 'Antares', label: 'Antares (Male, IN)' },
+  { value: 'Rasalas', label: 'Rasalas (Female, IN)' },
+];
 
 export function SettingsDialog({
   open,
   onOpenChange,
   onClearHistory,
   onCustomInstructionsChange,
+  onVoiceChange,
 }: SettingsDialogProps) {
-  const [theme, setTheme] = useState('dark');
   const [instructions, setInstructions] = useState('');
+  const [voice, setVoice] = useState('Algenib');
   const { toast } = useToast();
 
   useEffect(() => {
     if (open) {
-      const currentTheme = localStorage.getItem('theme') || 'dark';
-      setTheme(currentTheme);
-      document.documentElement.classList.remove('light', 'dark');
-      document.documentElement.classList.add(currentTheme);
-
       const storedInstructions = localStorage.getItem('customInstructions') || '';
       setInstructions(storedInstructions);
+      const storedVoice = localStorage.getItem('voice') || 'Algenib';
+      setVoice(storedVoice);
     }
   }, [open]);
-
-  const handleThemeChange = (newTheme: string) => {
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    document.documentElement.classList.remove('light', 'dark');
-    document.documentElement.classList.add(newTheme);
-  };
 
   const handleClear = () => {
     onClearHistory();
@@ -61,12 +62,14 @@ export function SettingsDialog({
     onOpenChange(false);
   };
 
-  const handleSaveInstructions = () => {
+  const handleSave = () => {
     localStorage.setItem('customInstructions', instructions);
     onCustomInstructionsChange(instructions);
+    localStorage.setItem('voice', voice);
+    onVoiceChange(voice);
     toast({
       title: 'Success',
-      description: 'Custom instructions have been saved.',
+      description: 'Settings have been saved.',
     });
     onOpenChange(false);
   };
@@ -82,22 +85,22 @@ export function SettingsDialog({
         </DialogHeader>
         <div className="grid gap-6 py-4">
           <div className="space-y-2">
-            <Label>Theme</Label>
-            <RadioGroup
-              value={theme}
-              onValueChange={handleThemeChange}
-              className="flex space-x-2"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="light" id="light" />
-                <Label htmlFor="light">Light</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="dark" id="dark" />
-                <Label htmlFor="dark">Dark</Label>
-              </div>
-            </RadioGroup>
+              <Label htmlFor="voice">Voice Selection</Label>
+              <Select value={voice} onValueChange={setVoice}>
+                <SelectTrigger id="voice" className="w-full">
+                  <SelectValue placeholder="Select a voice" />
+                </SelectTrigger>
+                <SelectContent>
+                  {voices.map((v) => (
+                    <SelectItem key={v.value} value={v.value}>{v.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+               <p className="text-sm text-muted-foreground">
+                Choose the voice for the text-to-speech feature.
+              </p>
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="custom-instructions">Custom Instructions</Label>
             <p className="text-sm text-muted-foreground">
@@ -120,7 +123,7 @@ export function SettingsDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSaveInstructions}>Save</Button>
+          <Button onClick={handleSave}>Save</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -38,22 +38,27 @@ async function toWav(
   });
 }
 
+const ConvertTextToSpeechInputSchema = z.object({
+  text: z.string(),
+  voice: z.string().optional(),
+});
+
 export const convertTextToSpeech = ai.defineFlow(
   {
     name: 'convertTextToSpeech',
-    inputSchema: z.string(),
+    inputSchema: ConvertTextToSpeechInputSchema,
     outputSchema: z.object({
       media: z.string(),
     }),
   },
-  async (text) => {
+  async ({text, voice}) => {
     const {media} = await ai.generate({
       model: googleAI.model('gemini-2.5-flash-preview-tts'),
       config: {
         responseModalities: ['AUDIO'],
         speechConfig: {
           voiceConfig: {
-            prebuiltVoiceConfig: {voiceName: 'Algenib'},
+            prebuiltVoiceConfig: {voiceName: voice || 'Algenib'},
           },
         },
       },

@@ -17,7 +17,7 @@ import {
 import { ChatHeader } from '@/components/chat-header';
 import { ChatMessages } from '@/components/chat-messages';
 import { ChatInput } from '@/components/chat-input';
-import { type Message, type Tool } from '@/lib/types';
+import { type Message } from '@/lib/types';
 import { sendMessage } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -37,7 +37,7 @@ const initialMessages: Message[] = [
   {
     id: '1',
     role: 'assistant',
-    text: "Hello there! I'm Yadi AI, your advanced assistant. I can now search the web, generate images, write emails, and more. How can I help you today?",
+    text: "Hello there! I'm Yadi AI, your advanced assistant. I can search the web, write code, create UI, and even generate images. How can I help you today?",
   },
 ];
 
@@ -49,12 +49,17 @@ export function ChatPage() {
   const [audioUrl, setAudioUrl] = useState<string>('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [customInstructions, setCustomInstructions] = useState('');
+  const [voice, setVoice] = useState<string>('Algenib');
   const { toast } = useToast();
 
   useEffect(() => {
     const storedInstructions = localStorage.getItem('customInstructions');
     if (storedInstructions) {
       setCustomInstructions(storedInstructions);
+    }
+    const storedVoice = localStorage.getItem('voice');
+    if (storedVoice) {
+      setVoice(storedVoice);
     }
   }, []);
 
@@ -129,7 +134,7 @@ export function ChatPage() {
     setIsLoading(true);
     setAudioUrl('');
 
-    const result = await sendMessage(history, input, documentText, customInstructions);
+    const result = await sendMessage(history, input, documentText, customInstructions, voice);
     
     setIsLoading(false);
 
@@ -260,7 +265,6 @@ export function ChatPage() {
             onSendMessage={handleSendMessage}
             isLoading={isLoading}
             placeholder={"Ask me anything..."}
-            activeTool={'chat'}
           />
           {audioUrl && <AudioUrlProvider audioUrl={audioUrl} />}
         </SidebarInset>
@@ -270,6 +274,7 @@ export function ChatPage() {
         onOpenChange={setIsSettingsOpen}
         onClearHistory={handleNewConversation}
         onCustomInstructionsChange={setCustomInstructions}
+        onVoiceChange={setVoice}
       />
     </>
   );

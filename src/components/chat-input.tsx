@@ -6,13 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Send, Mic, Loader2, Paperclip, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
-import type { Tool } from '@/lib/types';
 
 interface ChatInputProps {
   onSendMessage: (message: string, file?: File) => void;
   isLoading: boolean;
   placeholder?: string;
-  activeTool: Tool;
 }
 
 export function ChatInput({ onSendMessage, isLoading, placeholder }: ChatInputProps) {
