@@ -11,7 +11,7 @@ const interpreterPrompt = ai.definePrompt({
   input: { schema: z.object({ code: z.string(), language: z.string().optional().describe('The programming language of the code. Defaults to Python if not specified.') }) },
   output: { schema: z.string() },
   system:
-    'You are a code interpreter. The user will provide a code snippet and its programming language. Execute the given code and return only the standard output as a string. Do not provide any explanation or commentary. If there is an error, return the traceback.',
+    'You are a code interpreter. You will be given a code snippet and its programming language. Execute the code and return only the standard output as a raw string. Do not add any explanation, commentary, or markdown formatting. If there is an error, return the traceback or error message.',
   prompt: 'Language: {{{language}}}\nCode:\n{{{code}}}',
   config: {
     safetySettings: [
