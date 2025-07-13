@@ -1,7 +1,8 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Plus, LogOut, User, Settings, NotebookText, Mail, Languages, GraduationCap, ClipboardEdit, Briefcase, PenSquare, Paperclip, MessageSquare, Image as ImageIcon } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, User, Settings, NotebookText, Mail, Languages, GraduationCap, ClipboardEdit, PenSquare, Image as ImageIcon, MessageSquare, Briefcase } from 'lucide-react';
 
 import {
   SidebarProvider,
@@ -17,7 +18,7 @@ import {
 import { ChatHeader } from '@/components/chat-header';
 import { ChatMessages } from '@/components/chat-messages';
 import { ChatInput } from '@/components/chat-input';
-import { type Message } from '@/lib/types';
+import type { Message } from '@/lib/types';
 import { sendMessage } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -27,11 +28,14 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { AudioPlayer } from './audio-player';
 import { Badge } from './ui/badge';
 import { SettingsDialog } from './settings-dialog';
 import { cn } from '@/lib/utils';
+import { LogOut } from 'lucide-react';
+import { Paperclip } from 'lucide-react';
 
 const initialMessages: Message[] = [
   {
@@ -50,6 +54,7 @@ export function ChatPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [customInstructions, setCustomInstructions] = useState('');
   const [voice, setVoice] = useState<string>('Algenib');
+  const [currentTool, setCurrentTool] = useState('chat');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -67,25 +72,38 @@ export function ChatPage() {
     setMessages(initialMessages);
     setHistory('');
     setAudioUrl('');
+    setCurrentTool('chat');
+  };
+
+  const handleToolSelect = (tool: string, prompt?: string) => {
+    setCurrentTool(tool);
+    if(prompt) {
+        const input = document.querySelector('textarea[placeholder="Ask me anything..."]');
+        if (input) {
+            (input as HTMLTextAreaElement).value = prompt;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            (input as HTMLTextAreaElement).focus();
+        }
+    }
   };
 
   const fileToText = async (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-            const text = reader.result as string;
-            resolve(text);
-        };
-        reader.onerror = (error) => {
-            reject(error);
-        };
-        reader.readAsText(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = reader.result as string;
+        resolve(text);
+      };
+      reader.onerror = (error) => {
+        reject(error);
+      };
+      reader.readAsText(file);
     });
-  }
+  };
 
   const handleSendMessage = async (input: string, file?: File) => {
     if (isLoading || (!input.trim() && !file)) return;
-  
+
     let messageText: React.ReactNode = input;
     let documentText: string | undefined;
 
@@ -94,7 +112,7 @@ export function ChatPage() {
         try {
           documentText = await fileToText(file);
         } catch (error) {
-           toast({
+          toast({
             variant: 'destructive',
             title: 'Error reading file',
             description: 'Could not read the text from the uploaded file.',
@@ -103,13 +121,13 @@ export function ChatPage() {
         }
       } else {
         toast({
-            variant: 'destructive',
-            title: 'Unsupported File Type',
-            description: 'Currently, only plain text files (.txt) are supported.',
+          variant: 'destructive',
+          title: 'Unsupported File Type',
+          description: 'Currently, only plain text files (.txt) are supported.',
         });
         return;
       }
-      
+
       const fileBadge = (
         <Badge variant="outline" className="flex items-center gap-2 max-w-xs">
           <Paperclip className="h-4 w-4" />
@@ -127,15 +145,21 @@ export function ChatPage() {
     const userMessage: Message = {
       id: String(Date.now()),
       role: 'user',
-      text: messageText || "Processing file...", // Show placeholder if no text
+      text: messageText || 'Processing file...', // Show placeholder if no text
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
     setAudioUrl('');
 
-    const result = await sendMessage(history, input, documentText, customInstructions, voice);
-    
+    const result = await sendMessage(
+      history,
+      input,
+      documentText,
+      customInstructions,
+      voice
+    );
+
     setIsLoading(false);
 
     if (result.error) {
@@ -145,7 +169,7 @@ export function ChatPage() {
         description: result.error,
       });
       // Revert optimistic UI update on error
-      setMessages(prev => prev.slice(0, -1));
+      setMessages((prev) => prev.slice(0, -1));
       return;
     }
 
@@ -154,25 +178,26 @@ export function ChatPage() {
         id: String(Date.now() + 1),
         role: 'assistant',
         text: result.aiResponse,
-        content: result.aiResponseContent
+        content: result.aiResponseContent,
       };
       setMessages((prev) => [...prev, aiMessage]);
     }
-    
+
     if (result.updatedConversationHistory) {
       setHistory(result.updatedConversationHistory);
     }
-    
+
     if (result.audioUrl) {
       setAudioUrl(result.audioUrl);
     }
   };
 
-
   const UserProfile = () => {
     if (!isLoggedIn) {
       return (
-        <Button className="w-full" onClick={() => setIsLoggedIn(true)}>Login</Button>
+        <Button className="w-full" onClick={() => setIsLoggedIn(true)}>
+          Login
+        </Button>
       );
     }
 
@@ -183,7 +208,11 @@ export function ChatPage() {
             <div className="flex justify-between items-center w-full">
               <div className="flex gap-2 items-center">
                 <Avatar className="size-8">
-                  <AvatarImage src="https://placehold.co/100x100.png" data-ai-hint="profile picture" alt="User avatar" />
+                  <AvatarImage
+                    src="https://placehold.co/100x100.png"
+                    data-ai-hint="profile picture"
+                    alt="User avatar"
+                  />
                   <AvatarFallback>
                     <User />
                   </AvatarFallback>
@@ -211,10 +240,35 @@ export function ChatPage() {
         <Sidebar side="left" collapsible="icon" variant="sidebar">
           <SidebarHeader className="p-2">
             <div className="flex items-center gap-2 p-2">
-              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-8 text-primary shrink-0">
-                  <path d="M16 2.66663C16 2.66663 8 7.33329 8 16C8 24.6666 16 29.3333 16 29.3333C16 29.3333 24 24.6666 24 16C24 7.33329 16 2.66663 16 2.66663Z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M20 12L12 20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M12 12L20 20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 32 32"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="size-8 text-primary shrink-0"
+              >
+                <path
+                  d="M16 2.66663C16 2.66663 8 7.33329 8 16C8 24.6666 16 29.3333 16 29.3333C16 29.3333 24 24.6666 24 16C24 7.33329 16 2.66663 16 2.66663Z"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M20 12L12 20"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M12 12L20 20"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
               <span className="text-xl font-semibold">Yadi AI</span>
             </div>
@@ -231,17 +285,86 @@ export function ChatPage() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarSeparator />
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                    onClick={handleNewConversation}
-                    isActive={true}
-                    tooltip={{ children: 'Chat', side: 'right' }}
-                    className="w-full"
-                >
-                    <MessageSquare className="size-4" />
-                    <span>Chat</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={() => handleToolSelect('chat')}
+                isActive={currentTool === 'chat'}
+                tooltip={{ children: 'Chat', side: 'right' }}
+                className="w-full"
+              >
+                <MessageSquare className="size-4" />
+                <span>Chat</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={() => handleToolSelect('image', 'Generate an image of ')}
+                isActive={currentTool === 'image'}
+                tooltip={{ children: 'Image Creator', side: 'right' }}
+                className="w-full"
+              >
+                <ImageIcon className="size-4" />
+                <span>Image Creator</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={() => handleToolSelect('summarize', 'Summarize the following document: ')}
+                isActive={currentTool === 'summarize'}
+                tooltip={{ children: 'Summarize', side: 'right' }}
+                className="w-full"
+              >
+                <NotebookText className="size-4" />
+                <span>Summarize</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={() => handleToolSelect('email', 'Write an email about ')}
+                isActive={currentTool === 'email'}
+                tooltip={{ children: 'Email Assistant', side: 'right' }}
+                className="w-full"
+              >
+                <Mail className="size-4" />
+                <span>Email Assistant</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={() => handleToolSelect('translate', 'Translate the following to Spanish: ')}
+                isActive={currentTool === 'translate'}
+                tooltip={{ children: 'Translate', side: 'right' }}
+                className="w-full"
+              >
+                <Languages className="size-4" />
+                <span>Translator</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            <SidebarSeparator />
+            
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={() => handleToolSelect('homework', 'Help me with my homework: ')}
+                isActive={currentTool === 'homework'}
+                tooltip={{ children: 'Homework Helper', side: 'right' }}
+                className="w-full"
+              >
+                <GraduationCap className="size-4" />
+                <span>For Students</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                 onClick={() => handleToolSelect('professional', 'Write a report on ')}
+                 isActive={currentTool === 'professional'}
+                tooltip={{ children: 'Professional Tools', side: 'right' }}
+                className="w-full"
+              >
+                <Briefcase className="size-4" />
+                <span>For Professionals</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
           <SidebarSeparator />
           <SidebarFooter className="p-2">
@@ -258,13 +381,15 @@ export function ChatPage() {
             <UserProfile />
           </SidebarFooter>
         </Sidebar>
-        <SidebarInset className={cn("flex flex-col h-[100svh] animated-gradient")}>
+        <SidebarInset
+          className={cn('flex flex-col h-[100svh] animated-gradient')}
+        >
           <ChatHeader />
           <ChatMessages messages={messages} isLoading={isLoading} />
           <ChatInput
             onSendMessage={handleSendMessage}
             isLoading={isLoading}
-            placeholder={"Ask me anything..."}
+            placeholder={'Ask me anything...'}
           />
           {audioUrl && <AudioUrlProvider audioUrl={audioUrl} />}
         </SidebarInset>
