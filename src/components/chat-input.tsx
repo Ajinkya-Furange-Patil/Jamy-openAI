@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef, type FormEvent, useEffect, ChangeEvent } from 'react';
@@ -16,7 +15,7 @@ interface ChatInputProps {
   activeTool: Tool;
 }
 
-export function ChatInput({ onSendMessage, isLoading, placeholder, activeTool }: ChatInputProps) {
+export function ChatInput({ onSendMessage, isLoading, placeholder }: ChatInputProps) {
   const [input, setInput] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -125,7 +124,7 @@ export function ChatInput({ onSendMessage, isLoading, placeholder, activeTool }:
     }
   };
   
-  const isAttachmentDisabled = isLoading || !!file || (activeTool !== 'summarize' && activeTool !== 'meeting-summarizer');
+  const isAttachmentDisabled = isLoading || !!file;
 
   return (
     <div className="p-4 border-t bg-background shrink-0">
@@ -147,7 +146,7 @@ export function ChatInput({ onSendMessage, isLoading, placeholder, activeTool }:
               variant="ghost"
               onClick={handleAttachmentClick}
               disabled={isAttachmentDisabled}
-              title={isAttachmentDisabled ? "File attachment is only available for Summarizer and Meeting Summarizer tools." : "Attach file"}
+              title={"Attach file"}
             >
               <Paperclip className="w-4 h-4" />
               <span className="sr-only">Attach file</span>

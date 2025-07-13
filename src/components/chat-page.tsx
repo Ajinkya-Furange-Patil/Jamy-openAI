@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useLayoutEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, LogOut, User, Settings, NotebookText, Mail, Languages, GraduationCap, ClipboardEdit, Briefcase, PenSquare, Paperclip, MessageSquare, Image as ImageIcon } from 'lucide-react';
 
 import {
@@ -13,8 +13,6 @@ import {
   SidebarInset,
   SidebarFooter,
   SidebarSeparator,
-  SidebarGroup,
-  SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { ChatHeader } from '@/components/chat-header';
 import { ChatMessages } from '@/components/chat-messages';
@@ -34,40 +32,14 @@ import { AudioPlayer } from './audio-player';
 import { Badge } from './ui/badge';
 import { SettingsDialog } from './settings-dialog';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
 
 const initialMessages: Message[] = [
   {
     id: '1',
     role: 'assistant',
-    text: "Hello there! I'm Yadi AI, your friendly assistant. How can I help you today? Feel free to select a specialized tool or just start chatting.",
+    text: "Hello there! I'm Yadi AI, your advanced assistant. I can now search the web, generate images, write emails, and more. How can I help you today?",
   },
 ];
-
-const toolPlaceholders: Record<Tool, string> = {
-    chat: 'Type your message here or use the microphone...',
-    summarize: 'Attach a .txt file to summarize. You can add optional instructions here.',
-    email: 'Describe the email you want to write. For example, "Draft a follow-up email to a client..."',
-    translate: 'Enter the text you want to translate. For example, "Translate \'Hello, how are you?\' to French"',
-    'homework-helper': 'Ask a question about your homework...',
-    'research-assistant': 'What topic do you need help researching?',
-    'meeting-summarizer': 'Paste the meeting transcript or attach a file to summarize.',
-    'report-writer': 'Describe the report you need. For example, "Write a quarterly sales report..."',
-    'image-creator': 'Describe the image you want to create. e.g., "A photo of a Corgi wearing a chef hat"',
-};
-
-const toolInitialMessages: Record<Tool, Message[]> = {
-    chat: initialMessages,
-    summarize: [{ id: '1', role: 'assistant', text: 'Welcome to the Summarizer tool. Please attach a text file (.txt) and I will provide a concise summary for you.' }],
-    email: [{ id: '1', role: 'assistant', text: 'Welcome to the Email Assistant. Tell me what kind of email you need to write, and I\'ll draft it for you.' }],
-    translate: [{ id: '1', role: 'assistant', text: 'Welcome to the Language Translator. Enter any text and I will translate it for you.' }],
-    'homework-helper': [{ id: '1', role: 'assistant', text: 'Welcome to the Homework Helper. How can I assist you with your assignments?' }],
-    'research-assistant': [{ id: '1', role: 'assistant', text: 'Welcome to the Research Assistant. What information are you looking for today?' }],
-    'meeting-summarizer': [{ id: '1', role: 'assistant', text: 'Welcome to the Meeting Summarizer. You can paste a transcript or upload a file to get started.' }],
-    'report-writer': [{ id: '1', role: 'assistant', text: 'Welcome to the Report Writer. Describe the report you need, and I will help you create it.' }],
-    'image-creator': [{ id: '1', role: 'assistant', text: 'Welcome to the Image Creator. Describe any image you can imagine, and I will bring it to life!' }],
-};
-
 
 export function ChatPage() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
@@ -76,7 +48,6 @@ export function ChatPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(true);
   const [audioUrl, setAudioUrl] = useState<string>('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [activeTool, setActiveTool] = useState<Tool>('chat');
   const [customInstructions, setCustomInstructions] = useState('');
   const { toast } = useToast();
 
@@ -88,17 +59,10 @@ export function ChatPage() {
   }, []);
 
   const handleNewConversation = () => {
-    setMessages(toolInitialMessages[activeTool] || initialMessages);
+    setMessages(initialMessages);
     setHistory('');
     setAudioUrl('');
   };
-  
-  const handleToolChange = (tool: Tool) => {
-      setActiveTool(tool);
-      setMessages(toolInitialMessages[tool] || initialMessages);
-      setHistory('');
-      setAudioUrl('');
-  }
 
   const fileToText = async (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -120,15 +84,6 @@ export function ChatPage() {
     let messageText: React.ReactNode = input;
     let documentText: string | undefined;
 
-    if ((activeTool === 'summarize' || activeTool === 'meeting-summarizer') && !file && !input.trim()) {
-        toast({
-            variant: 'destructive',
-            title: 'Input Required',
-            description: `This tool requires a file or text to be provided.`,
-        });
-        return;
-    }
-
     if (file) {
       if (file.type.startsWith('text/')) {
         try {
@@ -145,7 +100,7 @@ export function ChatPage() {
         toast({
             variant: 'destructive',
             title: 'Unsupported File Type',
-            description: 'Currently, only plain text files (.txt) are supported for this tool.',
+            description: 'Currently, only plain text files (.txt) are supported.',
         });
         return;
       }
@@ -174,7 +129,7 @@ export function ChatPage() {
     setIsLoading(true);
     setAudioUrl('');
 
-    const result = await sendMessage(history, input, documentText, activeTool, customInstructions);
+    const result = await sendMessage(history, input, documentText, customInstructions);
     
     setIsLoading(false);
 
@@ -271,114 +226,17 @@ export function ChatPage() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarSeparator />
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => handleToolChange('chat')}
-                isActive={activeTool === 'chat'}
-                tooltip={{ children: 'General Chat', side: 'right' }}
-                className="w-full"
-              >
-                <MessageSquare className="size-4" />
-                <span>Chat</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarGroup className="px-0 pt-4 pb-2">
-              <SidebarGroupLabel>Tools</SidebarGroupLabel>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={() => handleToolChange('image-creator')}
-                  isActive={activeTool === 'image-creator'}
-                  tooltip={{ children: 'Image Creator', side: 'right' }}
-                  className="w-full"
+                    onClick={handleNewConversation}
+                    isActive={true}
+                    tooltip={{ children: 'Chat', side: 'right' }}
+                    className="w-full"
                 >
-                  <ImageIcon className="size-4" />
-                  <span>Image Creator</span>
+                    <MessageSquare className="size-4" />
+                    <span>Chat</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => handleToolChange('summarize')}
-                  isActive={activeTool === 'summarize'}
-                  tooltip={{ children: 'Summarize Document', side: 'right' }}
-                  className="w-full"
-                >
-                  <NotebookText className="size-4" />
-                  <span>Summarize</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => handleToolChange('email')}
-                  isActive={activeTool === 'email'}
-                  tooltip={{ children: 'Email Assistant', side: 'right' }}
-                  className="w-full"
-                >
-                  <Mail className="size-4" />
-                  <span>Email Assistant</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => handleToolChange('translate')}
-                  isActive={activeTool === 'translate'}
-                  tooltip={{ children: 'Language Translator', side: 'right' }}
-                  className="w-full"
-                >
-                  <Languages className="size-4" />
-                  <span>Translator</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarGroup>
-            <SidebarGroup className="px-0 pt-2 pb-2">
-              <SidebarGroupLabel>For Students</SidebarGroupLabel>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => handleToolChange('homework-helper')}
-                  isActive={activeTool === 'homework-helper'}
-                  tooltip={{ children: 'Homework Helper', side: 'right' }}
-                  className="w-full"
-                >
-                  <ClipboardEdit className="size-4" />
-                  <span>Homework Helper</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => handleToolChange('research-assistant')}
-                  isActive={activeTool === 'research-assistant'}
-                  tooltip={{ children: 'Research Assistant', side: 'right' }}
-                  className="w-full"
-                >
-                  <GraduationCap className="size-4" />
-                  <span>Research Assistant</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarGroup>
-            <SidebarGroup className="px-0 pt-2 pb-2">
-              <SidebarGroupLabel>For Professionals</SidebarGroupLabel>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => handleToolChange('meeting-summarizer')}
-                  isActive={activeTool === 'meeting-summarizer'}
-                  tooltip={{ children: 'Meeting Summarizer', side: 'right' }}
-                  className="w-full"
-                >
-                  <Briefcase className="size-4" />
-                  <span>Meeting Summarizer</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => handleToolChange('report-writer')}
-                  isActive={activeTool === 'report-writer'}
-                  tooltip={{ children: 'Report Writer', side: 'right' }}
-                  className="w-full"
-                >
-                  <PenSquare className="size-4" />
-                  <span>Report Writer</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarGroup>
           </SidebarMenu>
           <SidebarSeparator />
           <SidebarFooter className="p-2">
@@ -401,9 +259,8 @@ export function ChatPage() {
           <ChatInput
             onSendMessage={handleSendMessage}
             isLoading={isLoading}
-            placeholder={toolPlaceholders[activeTool]}
-            activeTool={activeTool}
-            key={activeTool}
+            placeholder={"Ask me anything..."}
+            activeTool={'chat'}
           />
           {audioUrl && <AudioUrlProvider audioUrl={audioUrl} />}
         </SidebarInset>
