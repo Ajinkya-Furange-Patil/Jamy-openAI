@@ -16,3 +16,4 @@ import '@/ai/flows/report-writer.ts';
 import '@/ai/flows/image-creator.ts';
 import '@/ai/flows/orchestrator-flow.ts';
 import '@/ai/tools/code-interpreter.ts';
+import '@/ai/tools/uiux-designer.ts';

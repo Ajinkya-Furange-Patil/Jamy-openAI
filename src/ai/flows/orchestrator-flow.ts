@@ -19,6 +19,7 @@ import {writeReport} from './report-writer';
 import {createImage} from './image-creator';
 import {generateDocumentSummary} from './generate-document-summary';
 import { codeInterpreterTool } from '../tools/code-interpreter';
+import { uiuxDesignerTool } from '../tools/uiux-designer';
 
 // Define tools for the orchestrator to use
 const emailTool = ai.defineTool(
@@ -140,6 +141,7 @@ const orchestratorPrompt = ai.definePrompt({
   tools: [
     webSearchTool,
     codeInterpreterTool,
+    uiuxDesignerTool,
     emailTool,
     translationTool,
     homeworkTool,
@@ -155,8 +157,9 @@ If no specific tool is needed, you can have a general conversation.
 If the user provides a document, consider using the document summarizer tool.
 If the user asks a question about current events or something that requires up-to-date information, use the web search tool.
 If the user asks a question that requires calculation, logic, or code execution, use the code interpreter tool. You should write Python code to solve the user's problem and the tool will return the result.
+If the user asks you to design, create, or build a UI component, use the UI/UX designer tool to generate JSX code.
 If you generate an image, set the 'content' field in the output to the image URL. For all other responses, just provide the text response.
-When you use a tool, especially the code interpreter, it's good practice to show the user the code you executed or the results you found. You can do this by putting the code or results in a markdown code block (\`\`\`) in your response.
+When you use a tool, especially the code interpreter or UI/UX designer, it's good practice to show the user the code you executed or created. You can do this by putting the code or results in a markdown code block (\`\`\`) in your response.
 {{#if customInstructions}}
 The user has provided the following custom instructions for you to follow:
 ---
