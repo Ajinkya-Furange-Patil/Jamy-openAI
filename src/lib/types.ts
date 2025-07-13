@@ -7,3 +7,8 @@ export interface Message {
   content?: ReactNode;
   audioUrl?: string;
 }
+
+export interface Conversation {
+    id: string;
+    messages: Message[];
+}

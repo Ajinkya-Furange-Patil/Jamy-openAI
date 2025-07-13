@@ -123,7 +123,7 @@ const webSearchTool = ai.defineTool(
 const OrchestratorInputSchema = z.object({
   prompt: z.string().describe('The user prompt.'),
   documentText: z.string().optional().describe('Optional text content from a file.'),
-  history: z.string().optional().describe('The conversation history.'),
+  history: z.array(z.any()).optional().describe('The conversation history.'),
   customInstructions: z.string().optional().describe('Custom instructions for the AI persona.'),
 });
 export type OrchestratorInput = z.infer<typeof OrchestratorInputSchema>;
@@ -171,12 +171,7 @@ The user has provided the following custom instructions for you to follow:
 ---
 {{customInstructions}}
 ---
-{{/if}}
-{{#if history}}
-Here is the conversation history:
-{{history}}
-{{/if}}
-`,
+{{/if}}`,
   prompt: `User prompt: {{prompt}}
 {{#if documentText}}
 Attached document content:
@@ -186,6 +181,7 @@ Attached document content:
 {{/if}}
 `,
   config: {
+    history: '{{history}}',
     safetySettings: [
       { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
       { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
@@ -202,7 +198,6 @@ export const orchestratorFlow = ai.defineFlow(
     outputSchema: z.object({
       text: z.string(),
       content: z.string().optional(),
-      history: z.string(),
     }),
   },
   async (input) => {
@@ -212,13 +207,9 @@ export const orchestratorFlow = ai.defineFlow(
       throw new Error('The AI did not generate a response.');
     }
     
-    // Update conversation history
-    const updatedHistory = `${input.history || ''}\nUser: ${input.prompt}\nAI: ${output.response}`;
-
     return {
       text: output.response,
       content: output.content,
-      history: updatedHistory,
     };
   }
 );

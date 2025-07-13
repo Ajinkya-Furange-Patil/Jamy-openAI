@@ -1,7 +1,5 @@
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Presentation, FileText } from 'lucide-react';
 
 export function ChatHeader() {
   return (
@@ -11,7 +9,7 @@ export function ChatHeader() {
         <h2 className="text-lg font-semibold">Conversation</h2>
       </div>
       <div className="flex items-center gap-2">
-        <Badge variant="outline" className="hidden sm:inline-flex">Free & Open Source</Badge>
+        <Badge variant="outline" className="hidden sm:inline-flex">Yadi AI</Badge>
       </div>
     </header>
   );

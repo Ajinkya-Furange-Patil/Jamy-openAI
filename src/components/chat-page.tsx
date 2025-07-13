@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { Plus, User, Settings, NotebookText, Mail, Languages, GraduationCap, ClipboardEdit, PenSquare, Image as ImageIcon, MessageSquare, Briefcase } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, User, Settings, NotebookText, Mail, Languages, GraduationCap, Briefcase, MessageSquare, Trash2, Bot } from 'lucide-react';
 
 import {
   SidebarProvider,
@@ -14,11 +14,14 @@ import {
   SidebarInset,
   SidebarFooter,
   SidebarSeparator,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
 } from '@/components/ui/sidebar';
 import { ChatHeader } from '@/components/chat-header';
 import { ChatMessages } from '@/components/chat-messages';
 import { ChatInput } from '@/components/chat-input';
-import type { Message } from '@/lib/types';
+import type { Message, Conversation } from '@/lib/types';
 import { sendMessage } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -28,26 +31,35 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { AudioPlayer } from './audio-player';
 import { Badge } from './ui/badge';
 import { SettingsDialog } from './settings-dialog';
 import { cn } from '@/lib/utils';
-import { LogOut } from 'lucide-react';
-import { Paperclip } from 'lucide-react';
+import { LogOut, Paperclip } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
-const initialMessages: Message[] = [
-  {
-    id: '1',
-    role: 'assistant',
-    text: "Hello there! I'm Yadi AI, your advanced assistant. I can search the web, write code, create UI, and even generate images. How can I help you today?",
-  },
-];
+
+const initialMessage: Message = {
+  id: '1',
+  role: 'assistant',
+  text: "Hello there! I'm Yadi AI, your advanced assistant. I can search the web, write code, create UI, and even generate images. How can I help you today?",
+};
+
 
 export function ChatPage() {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
-  const [history, setHistory] = useState<string>('');
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(true);
   const [audioUrl, setAudioUrl] = useState<string>('');
@@ -58,31 +70,69 @@ export function ChatPage() {
   const { toast } = useToast();
 
   useEffect(() => {
+    const storedConversations = localStorage.getItem('conversations');
     const storedInstructions = localStorage.getItem('customInstructions');
-    if (storedInstructions) {
-      setCustomInstructions(storedInstructions);
-    }
     const storedVoice = localStorage.getItem('voice');
-    if (storedVoice) {
-      setVoice(storedVoice);
+
+    if (storedInstructions) setCustomInstructions(storedInstructions);
+    if (storedVoice) setVoice(storedVoice);
+
+    if (storedConversations) {
+      const parsedConvos = JSON.parse(storedConversations);
+      if (parsedConvos.length > 0) {
+        setConversations(parsedConvos);
+        setActiveConversationId(parsedConvos[0].id);
+        return;
+      }
     }
+    handleNewConversation();
   }, []);
 
+  useEffect(() => {
+    if (conversations.length > 0) {
+      localStorage.setItem('conversations', JSON.stringify(conversations));
+    }
+  }, [conversations]);
+
+  const activeConversation = conversations.find(c => c.id === activeConversationId);
+
+  const updateActiveConversation = (updater: (convo: Conversation) => Conversation) => {
+    setConversations(prev =>
+      prev.map(c => (c.id === activeConversationId ? updater(c) : c))
+    );
+  };
+
   const handleNewConversation = () => {
-    setMessages(initialMessages);
-    setHistory('');
+    const newConversation: Conversation = {
+      id: `convo-${Date.now()}`,
+      messages: [initialMessage],
+    };
+    setConversations(prev => [newConversation, ...prev]);
+    setActiveConversationId(newConversation.id);
     setAudioUrl('');
     setCurrentTool('chat');
   };
 
+  const deleteConversation = (id: string) => {
+    setConversations(prev => prev.filter(c => c.id !== id));
+    if (activeConversationId === id) {
+      const remainingConversations = conversations.filter(c => c.id !== id);
+      if (remainingConversations.length > 0) {
+        setActiveConversationId(remainingConversations[0].id);
+      } else {
+        handleNewConversation();
+      }
+    }
+  }
+
   const handleToolSelect = (tool: string, prompt?: string) => {
     setCurrentTool(tool);
     if(prompt) {
-        const input = document.querySelector('textarea[placeholder="Ask me anything..."]');
+        const input = document.querySelector('textarea');
         if (input) {
-            (input as HTMLTextAreaElement).value = prompt;
+            input.value = prompt;
             input.dispatchEvent(new Event('input', { bubbles: true }));
-            (input as HTMLTextAreaElement).focus();
+            input.focus();
         }
     }
   };
@@ -90,36 +140,20 @@ export function ChatPage() {
   const fileToText = async (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => {
-        const text = reader.result as string;
-        resolve(text);
-      };
-      reader.onerror = (error) => {
-        reject(error);
-      };
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
       reader.readAsText(file);
     });
   };
 
   const handleSendMessage = async (input: string, file?: File) => {
-    if (isLoading || (!input.trim() && !file)) return;
+    if (isLoading || (!input.trim() && !file) || !activeConversation) return;
 
     let messageText: React.ReactNode = input;
     let documentText: string | undefined;
 
     if (file) {
-      if (file.type.startsWith('text/')) {
-        try {
-          documentText = await fileToText(file);
-        } catch (error) {
-          toast({
-            variant: 'destructive',
-            title: 'Error reading file',
-            description: 'Could not read the text from the uploaded file.',
-          });
-          return;
-        }
-      } else {
+      if (!file.type.startsWith('text/')) {
         toast({
           variant: 'destructive',
           title: 'Unsupported File Type',
@@ -127,33 +161,46 @@ export function ChatPage() {
         });
         return;
       }
-
-      const fileBadge = (
-        <Badge variant="outline" className="flex items-center gap-2 max-w-xs">
-          <Paperclip className="h-4 w-4" />
-          <span className="truncate">{file.name}</span>
-        </Badge>
-      );
-      messageText = (
-        <div className="flex flex-col gap-2">
-          {input && <span>{input}</span>}
-          {fileBadge}
-        </div>
-      );
+      try {
+        documentText = await fileToText(file);
+        const fileBadge = (
+          <Badge variant="outline" className="flex items-center gap-2 max-w-xs">
+            <Paperclip className="h-4 w-4" />
+            <span className="truncate">{file.name}</span>
+          </Badge>
+        );
+        messageText = (
+          <div className="flex flex-col gap-2">
+            {input && <span>{input}</span>}
+            {fileBadge}
+          </div>
+        );
+      } catch (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Error reading file',
+          description: 'Could not read the text from the uploaded file.',
+        });
+        return;
+      }
     }
 
     const userMessage: Message = {
       id: String(Date.now()),
       role: 'user',
-      text: messageText || 'Processing file...', // Show placeholder if no text
+      text: messageText,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    updateActiveConversation(c => ({
+      ...c,
+      messages: [...c.messages, userMessage],
+    }));
+
     setIsLoading(true);
     setAudioUrl('');
 
     const result = await sendMessage(
-      history,
+      activeConversation.messages,
       input,
       documentText,
       customInstructions,
@@ -168,8 +215,10 @@ export function ChatPage() {
         title: 'Error',
         description: result.error,
       });
-      // Revert optimistic UI update on error
-      setMessages((prev) => prev.slice(0, -1));
+      updateActiveConversation(c => ({
+        ...c,
+        messages: c.messages.slice(0, -1),
+      }));
       return;
     }
 
@@ -180,11 +229,10 @@ export function ChatPage() {
         text: result.aiResponse,
         content: result.aiResponseContent,
       };
-      setMessages((prev) => [...prev, aiMessage]);
-    }
-
-    if (result.updatedConversationHistory) {
-      setHistory(result.updatedConversationHistory);
+      updateActiveConversation(c => ({
+        ...c,
+        messages: [...c.messages, aiMessage],
+      }));
     }
 
     if (result.audioUrl) {
@@ -240,36 +288,7 @@ export function ChatPage() {
         <Sidebar side="left" collapsible="icon" variant="sidebar">
           <SidebarHeader className="p-2">
             <div className="flex items-center gap-2 p-2">
-              <svg
-                width="32"
-                height="32"
-                viewBox="0 0 32 32"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="size-8 text-primary shrink-0"
-              >
-                <path
-                  d="M16 2.66663C16 2.66663 8 7.33329 8 16C8 24.6666 16 29.3333 16 29.3333C16 29.3333 24 24.6666 24 16C24 7.33329 16 2.66663 16 2.66663Z"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M20 12L12 20"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M12 12L20 20"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+            <Bot className="size-8 text-primary shrink-0"/>
               <span className="text-xl font-semibold">Yadi AI</span>
             </div>
           </SidebarHeader>
@@ -284,87 +303,53 @@ export function ChatPage() {
                 <span>New Conversation</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            <SidebarSeparator />
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => handleToolSelect('chat')}
-                isActive={currentTool === 'chat'}
-                tooltip={{ children: 'Chat', side: 'right' }}
-                className="w-full"
-              >
-                <MessageSquare className="size-4" />
-                <span>Chat</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => handleToolSelect('image', 'Generate an image of ')}
-                isActive={currentTool === 'image'}
-                tooltip={{ children: 'Image Creator', side: 'right' }}
-                className="w-full"
-              >
-                <ImageIcon className="size-4" />
-                <span>Image Creator</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => handleToolSelect('summarize', 'Summarize the following document: ')}
-                isActive={currentTool === 'summarize'}
-                tooltip={{ children: 'Summarize', side: 'right' }}
-                className="w-full"
-              >
-                <NotebookText className="size-4" />
-                <span>Summarize</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => handleToolSelect('email', 'Write an email about ')}
-                isActive={currentTool === 'email'}
-                tooltip={{ children: 'Email Assistant', side: 'right' }}
-                className="w-full"
-              >
-                <Mail className="size-4" />
-                <span>Email Assistant</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => handleToolSelect('translate', 'Translate the following to Spanish: ')}
-                isActive={currentTool === 'translate'}
-                tooltip={{ children: 'Translate', side: 'right' }}
-                className="w-full"
-              >
-                <Languages className="size-4" />
-                <span>Translator</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-
-            <SidebarSeparator />
             
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => handleToolSelect('homework', 'Help me with my homework: ')}
-                isActive={currentTool === 'homework'}
-                tooltip={{ children: 'Homework Helper', side: 'right' }}
-                className="w-full"
-              >
-                <GraduationCap className="size-4" />
-                <span>For Students</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                 onClick={() => handleToolSelect('professional', 'Write a report on ')}
-                 isActive={currentTool === 'professional'}
-                tooltip={{ children: 'Professional Tools', side: 'right' }}
-                className="w-full"
-              >
-                <Briefcase className="size-4" />
-                <span>For Professionals</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            <SidebarGroup className="mt-4">
+              <SidebarGroupLabel>History</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {conversations.slice(0,10).map(convo => {
+                    const firstUserMessage = convo.messages.find(m => m.role === 'user');
+                    const title = typeof firstUserMessage?.text === 'string' 
+                      ? firstUserMessage.text.substring(0, 25) + (firstUserMessage.text.length > 25 ? '...' : '') 
+                      : 'Chat';
+
+                    return (
+                        <SidebarMenuItem key={convo.id}>
+                          <SidebarMenuButton
+                            onClick={() => setActiveConversationId(convo.id)}
+                            isActive={activeConversationId === convo.id}
+                            tooltip={{ children: title, side: 'right' }}
+                            className="w-full"
+                          >
+                            <MessageSquare className="size-4" />
+                            <span>{title}</span>
+                          </SidebarMenuButton>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="absolute right-1 top-1 h-6 w-6 opacity-0 group-hover/menu-item:opacity-100">
+                                <Trash2 className="size-3"/>
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete this conversation.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => deleteConversation(convo.id)}>Delete</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
           </SidebarMenu>
           <SidebarSeparator />
           <SidebarFooter className="p-2">
@@ -385,7 +370,7 @@ export function ChatPage() {
           className={cn('flex flex-col h-[100svh] animated-gradient')}
         >
           <ChatHeader />
-          <ChatMessages messages={messages} isLoading={isLoading} />
+          <ChatMessages messages={activeConversation?.messages || []} isLoading={isLoading} />
           <ChatInput
             onSendMessage={handleSendMessage}
             isLoading={isLoading}
@@ -397,7 +382,10 @@ export function ChatPage() {
       <SettingsDialog
         open={isSettingsOpen}
         onOpenChange={setIsSettingsOpen}
-        onClearHistory={handleNewConversation}
+        onClearHistory={() => {
+          localStorage.removeItem('conversations');
+          handleNewConversation();
+        }}
         onCustomInstructionsChange={setCustomInstructions}
         onVoiceChange={setVoice}
       />

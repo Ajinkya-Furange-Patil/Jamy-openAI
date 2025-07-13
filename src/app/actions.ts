@@ -3,20 +3,26 @@
 
 import {convertTextToSpeech} from '@/ai/flows/text-to-speech';
 import { orchestratorFlow } from '@/ai/flows/orchestrator-flow';
+import type { Message } from '@/lib/types';
 
 export async function sendMessage(
-  history: string,
+  history: Message[],
   message: string,
   documentText?: string,
   customInstructions?: string,
   voice?: string,
 ) {
   try {
-    // Start both requests in parallel
+    const genkitHistory = history.map(msg => ({
+      role: msg.role === 'assistant' ? 'model' : 'user',
+      content: [{ text: typeof msg.text === 'string' ? msg.text : 'User uploaded a file.' }], 
+    }));
+
+
     const orchestratorPromise = orchestratorFlow({
       prompt: message,
       documentText,
-      history,
+      history: genkitHistory,
       customInstructions,
     });
 
@@ -27,22 +33,18 @@ export async function sendMessage(
         aiResponse: null,
         aiResponseContent: null,
         audioUrl: null,
-        updatedConversationHistory: history,
         error: 'The AI did not generate a response. Please try again.',
       };
     }
     
-    // Start TTS conversion but don't wait for it
     const ttsPromise = convertTextToSpeech({text: orchestratorResult.text, voice});
 
-    // Wait for the TTS to complete separately
     const ttsResult = await ttsPromise;
     
     return {
       aiResponse: orchestratorResult.text,
       aiResponseContent: orchestratorResult.content,
       audioUrl: ttsResult.media,
-      updatedConversationHistory: orchestratorResult.history,
       error: null,
     };
   } catch (e) {
@@ -53,7 +55,6 @@ export async function sendMessage(
       aiResponse: null,
       aiResponseContent: null,
       audioUrl: null,
-      updatedConversationHistory: history, // Return original history on error
       error: `Sorry, I encountered an error. ${errorMessage}`,
     };
   }
