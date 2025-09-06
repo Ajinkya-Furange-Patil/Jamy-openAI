@@ -98,7 +98,7 @@ body {
 
   .animated-gradient {
     animation: gradient-animation 15s ease infinite;
-    background: linear-gradient(-45deg, hsl(var(--background)), hsl(var(--foreground) / 0.05), hsl(var(--background)), hsl(var(--secondary) / 0.1));
+    background: linear-gradient(-45deg, hsl(var(--background)), hsl(var(--foreground) / 0.1), hsl(var(--background)), hsl(var(--secondary) / 0.2));
     background-size: 400% 400%;
   }
 
