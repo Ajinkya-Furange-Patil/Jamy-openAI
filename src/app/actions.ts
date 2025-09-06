@@ -2,9 +2,30 @@
 'use server';
 
 import {convertTextToSpeech} from '@/ai/flows/text-to-speech';
-import { orchestratorFlow } from '@/ai/flows/orchestrator-flow';
 import type { Message } from '@/lib/types';
-import { Message as GenkitMessage } from 'genkit';
+import { OpenAI } from 'openai';
+
+const client = new OpenAI({
+	baseURL: "https://router.huggingface.co/v1",
+	apiKey: process.env.HF_TOKEN,
+});
+
+// Helper function to extract plain text from ReactNode
+const extractText = (node: React.ReactNode): string => {
+  if (typeof node === 'string') {
+    return node;
+  }
+  if (typeof node === 'number') {
+    return String(node);
+  }
+  if (Array.isArray(node)) {
+    return node.map(extractText).join('');
+  }
+  if (React.isValidElement(node) && node.props.children) {
+    return React.Children.map(node.props.children, extractText).join('');
+  }
+  return '';
+};
 
 export async function sendMessage(
   history: Message[],
@@ -14,20 +35,35 @@ export async function sendMessage(
   voice?: string,
 ) {
   try {
-    const genkitHistory: GenkitMessage[] = history.map(msg => ({
-      role: msg.role === 'assistant' ? 'model' : 'user',
-      content: [{ text: typeof msg.text === 'string' ? msg.text : 'User uploaded a file.' }], 
+    const formattedHistory: OpenAI.Chat.ChatCompletionMessageParam[] = history.map(msg => ({
+        role: msg.role === 'user' ? 'user' : 'assistant',
+        content: extractText(msg.text),
     }));
 
+    // Add the current user message to the history for the API call
+    let userMessageContent = message;
+    if (documentText) {
+        userMessageContent += `\n\n--- Attached Document ---\n${documentText}`;
+    }
 
-    const orchestratorResult = await orchestratorFlow({
-      prompt: message,
-      documentText,
-      history: genkitHistory,
-      customInstructions,
-    });
+    formattedHistory.push({ role: 'user', content: userMessageContent });
     
-    if (!orchestratorResult.text) {
+    // Add custom instructions as a system message if they exist
+    if (customInstructions) {
+        formattedHistory.unshift({
+            role: 'system',
+            content: customInstructions,
+        });
+    }
+
+    const chatCompletion = await client.chat.completions.create({
+        model: "openai/gpt-oss-20b:hyperbolic",
+        messages: formattedHistory,
+    });
+
+    const aiResponse = chatCompletion.choices[0].message?.content || null;
+
+    if (!aiResponse) {
       return {
         aiResponse: null,
         aiResponseContent: null,
@@ -36,11 +72,11 @@ export async function sendMessage(
       };
     }
     
-    const ttsResult = await convertTextToSpeech({text: orchestratorResult.text, voice});
+    const ttsResult = await convertTextToSpeech({text: aiResponse, voice});
     
     return {
-      aiResponse: orchestratorResult.text,
-      aiResponseContent: orchestratorResult.content,
+      aiResponse: aiResponse,
+      aiResponseContent: null, // The new model doesn't have the structured content field
       audioUrl: ttsResult.media,
       error: null,
     };
