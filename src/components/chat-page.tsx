@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, User, Settings, NotebookText, Mail, Languages, GraduationCap, Briefcase, Trash2, Bot, PencilRuler, BrainCircuit, History } from 'lucide-react';
+import { Plus, User, Settings, NotebookText, Mail, Languages, GraduationCap, Briefcase, Trash2, Bot, PencilRuler, BrainCircuit, History, Pencil } from 'lucide-react';
 import { ChatHeader } from '@/components/chat-header';
 import { ChatMessages } from '@/components/chat-messages';
 import { ChatInput } from '@/components/chat-input';
@@ -35,6 +35,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { Input } from './ui/input';
 
 const initialMessage: Message = {
   id: '1',
@@ -62,6 +63,8 @@ export function ChatPage() {
   const [customInstructions, setCustomInstructions] = useState('');
   const [voice, setVoice] = useState<string>('Algenib');
   const [autoPlayAudio, setAutoPlayAudio] = useState(true);
+  const [editingConversationId, setEditingConversationId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -110,6 +113,7 @@ export function ChatPage() {
     const newConversation: Conversation = {
       id: `convo-${Date.now()}`,
       messages: [initialMessage],
+      title: 'New Chat',
     };
     setConversations(prev => [newConversation, ...prev]);
     setActiveConversationId(newConversation.id);
@@ -128,6 +132,21 @@ export function ChatPage() {
       }
     }
   };
+
+  const renameConversation = (id: string, newTitle: string) => {
+    if (!newTitle.trim()) return;
+    setConversations(prev =>
+      prev.map(c => (c.id === id ? { ...c, title: newTitle.trim() } : c))
+    );
+    setEditingConversationId(null);
+    setEditingTitle('');
+  };
+
+  const handleRenameSubmit = (e: React.FormEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    renameConversation(id, editingTitle);
+  }
   
   const handleStarterSelect = (prompt: string) => {
     const textarea = document.querySelector('textarea');
@@ -300,43 +319,66 @@ export function ChatPage() {
         <div className="max-h-96 overflow-y-auto">
           {conversations.length > 0 ? (
             conversations.map(convo => {
-              const firstUserMessage = convo.messages.find(m => m.role === 'user');
-              let title = 'Chat';
-              if (firstUserMessage?.text && typeof firstUserMessage.text === 'string' && firstUserMessage.text.trim()) {
-                title = firstUserMessage.text.substring(0, 35) + (firstUserMessage.text.length > 35 ? '...' : '');
-              } else if (convo.messages.length > 1) {
-                const firstAssistantMessage = convo.messages.find(m => m.role === 'assistant');
-                if (firstAssistantMessage?.text && typeof firstAssistantMessage.text === 'string' && firstAssistantMessage.text.trim()) {
-                  title = "AI: " + firstAssistantMessage.text.substring(0, 30) + (firstAssistantMessage.text.length > 30 ? '...' : '');
-                }
-              }
-
+              const defaultTitle = convo.messages.find(m => m.role === 'user')?.text;
+              const title = convo.title || (typeof defaultTitle === 'string' ? (defaultTitle.substring(0, 35) + (defaultTitle.length > 35 ? '...' : '')) : 'Chat');
+             
               return (
                 <DropdownMenuItem
                   key={convo.id}
-                  onSelect={() => setActiveConversationId(convo.id)}
+                  onSelect={() => {
+                    if (editingConversationId !== convo.id) {
+                      setActiveConversationId(convo.id)
+                    }
+                  }}
                   className="flex justify-between items-center"
                 >
-                  <span className='truncate'>{title}</span>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 opacity-50 hover:opacity-100" onClick={(e) => e.stopPropagation()}>
-                        <Trash2 className="size-3"/>
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete this conversation.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => deleteConversation(convo.id)}>Delete</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  {editingConversationId === convo.id ? (
+                     <form onSubmit={(e) => handleRenameSubmit(e, convo.id)} className="flex-1 pr-2">
+                      <Input
+                        autoFocus
+                        value={editingTitle}
+                        onChange={(e) => setEditingTitle(e.target.value)}
+                        onBlur={() => renameConversation(convo.id, editingTitle)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="h-7 text-sm"
+                      />
+                     </form>
+                  ) : (
+                    <>
+                      <span className='truncate pr-2 flex-1'>{title}</span>
+                      <div className="flex items-center">
+                        <Button
+                          variant="ghost" size="icon" className="h-6 w-6 shrink-0 opacity-50 hover:opacity-100"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingConversationId(convo.id);
+                            setEditingTitle(convo.title || '');
+                          }}
+                        >
+                          <Pencil className="size-3" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 opacity-50 hover:opacity-100" onClick={(e) => e.stopPropagation()}>
+                              <Trash2 className="size-3"/>
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete this conversation.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => deleteConversation(convo.id)}>Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </>
+                  )}
                 </DropdownMenuItem>
               );
             })

@@ -1,3 +1,4 @@
+
 import type { ReactNode } from 'react';
 
 export interface Message {
@@ -10,5 +11,6 @@ export interface Message {
 
 export interface Conversation {
     id: string;
+    title: string;
     messages: Message[];
 }
