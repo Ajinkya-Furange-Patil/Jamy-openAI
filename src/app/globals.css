@@ -118,15 +118,14 @@ body {
 
   /* Sliding animation for conversation starters */
   .conversation-starters {
-    @apply flex overflow-x-auto p-4 gap-3 transition-transform duration-300 ease-in-out;
+    @apply flex overflow-x-auto p-4 gap-3;
   }
-  .conversation-starters:hover > .starter-card {
-    transform: translateX(calc(-100% - 0.75rem)); /* Move card left on hover */
-  }
+  
   .starter-card {
-    @apply transition-transform duration-500 ease-in-out;
+    @apply transition-transform duration-300 ease-in-out;
   }
-  .starter-card:hover ~ .starter-card {
-    transform: translateX(calc(100% + 0.75rem)); /* Move subsequent cards right */
+
+  .starter-card:hover {
+    transform: scale(1.05);
   }
 }
