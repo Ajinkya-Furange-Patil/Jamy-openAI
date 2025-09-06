@@ -2,22 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, User, Settings, NotebookText, Mail, Languages, GraduationCap, Briefcase, MessageSquare, Trash2, Bot, PencilRuler, BrainCircuit } from 'lucide-react';
-
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarInset,
-  SidebarFooter,
-  SidebarSeparator,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarGroupContent,
-} from '@/components/ui/sidebar';
+import { Plus, User, Settings, NotebookText, Mail, Languages, GraduationCap, Briefcase, Trash2, Bot, PencilRuler, BrainCircuit, History } from 'lucide-react';
 import { ChatHeader } from '@/components/chat-header';
 import { ChatMessages } from '@/components/chat-messages';
 import { ChatInput } from '@/components/chat-input';
@@ -30,12 +15,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { AudioPlayer } from './audio-player';
 import { Badge } from './ui/badge';
 import { SettingsDialog } from './settings-dialog';
-import { cn } from '@/lib/utils';
 import { LogOut, Paperclip } from 'lucide-react';
 import {
   AlertDialog,
@@ -46,16 +32,24 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-
+} from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 const initialMessage: Message = {
   id: '1',
   role: 'assistant',
-  text: "Hello there! I'm JAMY, your advanced assistant. I can search the web, write code, create UI, and even generate images. How can I help you today?",
+  text: "Hello there! I'm JAMY AI, your advanced assistant. I can search the web, write code, create UI, and even generate images. How can I help you today?",
 };
 
+const conversationStarters = [
+    { icon: NotebookText, label: 'Summarize', prompt: 'Summarize the following document:' },
+    { icon: Mail, label: 'Email Assistant', prompt: 'Draft an email to...' },
+    { icon: Languages, label: 'Translate', prompt: 'Translate the following text to...' },
+    { icon: GraduationCap, label: 'Homework Helper', prompt: 'I have a homework question...' },
+    { icon: Briefcase, label: 'Report Writer', prompt: 'Write a report on...' },
+    { icon: PencilRuler, label: 'Image Creator', prompt: 'Create an image of...' },
+    { icon: BrainCircuit, label: 'Code Interpreter', prompt: 'Write some code to...' },
+];
 
 export function ChatPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -86,7 +80,6 @@ export function ChatPage() {
         }
       } catch (e) {
          console.error("Failed to parse conversations from localStorage", e);
-         // If parsing fails, start with a new conversation
       }
     }
     handleNewConversation();
@@ -94,9 +87,10 @@ export function ChatPage() {
   }, []);
 
   useEffect(() => {
-    // Avoid saving empty conversations array on initial load
     if (conversations.length > 0) {
       localStorage.setItem('conversations', JSON.stringify(conversations));
+    } else {
+      localStorage.removeItem('conversations');
     }
   }, [conversations]);
 
@@ -129,16 +123,11 @@ export function ChatPage() {
         handleNewConversation();
       }
     }
-    // If we delete all conversations, clear from storage as well
-    if (remainingConversations.length === 0) {
-        localStorage.removeItem('conversations');
-    }
-  }
-
-  const handleToolSelect = (prompt: string) => {
+  };
+  
+  const handleStarterSelect = (prompt: string) => {
     const textarea = document.querySelector('textarea');
     if (textarea) {
-      // A little trick to programmatically update the textarea value and its state
       const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value")?.set;
       nativeInputValueSetter?.call(textarea, prompt);
       textarea.dispatchEvent(new Event('input', { bubbles: true }));
@@ -166,7 +155,7 @@ export function ChatPage() {
         toast({
           variant: 'destructive',
           title: 'Unsupported File Type',
-          description: 'Currently, only plain text files (.txt) are supported.',
+          description: 'Currently, only plain text files are supported.',
         });
         return;
       }
@@ -201,12 +190,10 @@ export function ChatPage() {
     };
 
     const currentHistory = activeConversation.messages;
-
     updateActiveConversation(c => ({
       ...c,
       messages: [...c.messages, userMessage],
     }));
-
     setIsLoading(true);
     setAudioUrl('');
 
@@ -226,7 +213,6 @@ export function ChatPage() {
         title: 'Error',
         description: result.error,
       });
-      // Revert message on error
       updateActiveConversation(c => ({
         ...c,
         messages: c.messages.slice(0, -1),
@@ -246,7 +232,6 @@ export function ChatPage() {
         messages: [...c.messages, aiMessage],
       }));
     } else {
-       // Revert message if no response
        updateActiveConversation(c => ({
         ...c,
         messages: c.messages.slice(0, -1),
@@ -258,197 +243,156 @@ export function ChatPage() {
     }
   };
 
-  const UserProfile = () => {
-    if (!isLoggedIn) {
-      return (
-        <Button className="w-full" onClick={() => setIsLoggedIn(true)}>
-          Login
+  const UserMenu = () => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="rounded-full h-10 w-10">
+          <Avatar className="size-9">
+            <AvatarImage
+              src="https://placehold.co/100x100.png"
+              data-ai-hint="profile picture"
+              alt="User avatar"
+            />
+            <AvatarFallback>
+              <User />
+            </AvatarFallback>
+          </Avatar>
         </Button>
-      );
-    }
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56 mt-2">
+        <DropdownMenuLabel>
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">John Doe</p>
+            <p className="text-xs leading-none text-muted-foreground">
+              john.doe@example.com
+            </p>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
+          <Settings className="mr-2 h-4 w-4" />
+          <span>Settings</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => setIsLoggedIn(false)}>
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Log out</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="w-full justify-start p-2 h-auto">
-            <div className="flex justify-between items-center w-full">
-              <div className="flex gap-2 items-center">
-                <Avatar className="size-8">
-                  <AvatarImage
-                    src="https://placehold.co/100x100.png"
-                    data-ai-hint="profile picture"
-                    alt="User avatar"
-                  />
-                  <AvatarFallback>
-                    <User />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col items-start">
-                  <span className="font-medium text-sm">John Doe</span>
-                </div>
-              </div>
-            </div>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56 mb-2">
-          <DropdownMenuItem onClick={() => setIsLoggedIn(false)}>
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>Log out</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  };
+  const HistoryMenu = () => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm">
+          <History className="mr-2 h-4 w-4" />
+          <span>History</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-80 mt-2">
+        <DropdownMenuLabel>Conversation History</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <div className="max-h-96 overflow-y-auto">
+          {conversations.length > 0 ? (
+            conversations.map(convo => {
+              const firstUserMessage = convo.messages.find(m => m.role === 'user');
+              let title = 'Chat';
+              if (firstUserMessage?.text && typeof firstUserMessage.text === 'string' && firstUserMessage.text.trim()) {
+                title = firstUserMessage.text.substring(0, 35) + (firstUserMessage.text.length > 35 ? '...' : '');
+              } else if (convo.messages.length > 1) {
+                const firstAssistantMessage = convo.messages.find(m => m.role === 'assistant');
+                if (firstAssistantMessage?.text && typeof firstAssistantMessage.text === 'string' && firstAssistantMessage.text.trim()) {
+                  title = "AI: " + firstAssistantMessage.text.substring(0, 30) + (firstAssistantMessage.text.length > 30 ? '...' : '');
+                }
+              }
+
+              return (
+                <DropdownMenuItem
+                  key={convo.id}
+                  onSelect={() => setActiveConversationId(convo.id)}
+                  className="flex justify-between items-center"
+                >
+                  <span className='truncate'>{title}</span>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 opacity-50 hover:opacity-100" onClick={(e) => e.stopPropagation()}>
+                        <Trash2 className="size-3"/>
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete this conversation.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => deleteConversation(convo.id)}>Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </DropdownMenuItem>
+              );
+            })
+          ) : (
+            <div className="px-2 py-4 text-center text-sm text-muted-foreground">No history yet.</div>
+          )}
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   return (
-    <>
-      <SidebarProvider>
-        <Sidebar side="left" collapsible="icon" variant="sidebar">
-          <SidebarHeader className="p-2">
-            <div className="flex items-center gap-2 p-2">
-            <Bot className="size-8 text-primary shrink-0"/>
-              <span className="text-xl font-semibold">JAMY</span>
+    <TooltipProvider>
+      <div className="flex flex-col h-[100svh] animated-gradient">
+        <ChatHeader>
+            <div className="flex items-center gap-2">
+                <Bot className="size-8 text-primary shrink-0"/>
+                <h1 className="text-xl font-semibold">JAMY AI</h1>
             </div>
-          </SidebarHeader>
-          <SidebarMenu className="p-2 flex-1">
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={handleNewConversation}
-                tooltip={{ children: 'New Conversation', side: 'right' }}
-                className="w-full"
-              >
-                <Plus className="size-4" />
-                <span>New Conversation</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-
-             <SidebarGroup className="mt-4">
-              <SidebarGroupLabel>Features</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton onClick={() => handleToolSelect('Summarize the following document:')} tooltip={{ children: 'Summarize', side: 'right' }}>
-                      <NotebookText /><span>Summarize</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton onClick={() => handleToolSelect('Draft an email to...')} tooltip={{ children: 'Email Assistant', side: 'right' }}>
-                      <Mail /><span>Email Assistant</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                     <SidebarMenuButton onClick={() => handleToolSelect('Translate the following text to...')} tooltip={{ children: 'Translate', side: 'right' }}>
-                       <Languages /><span>Translate</span>
-                     </SidebarMenuButton>
-                  </SidebarMenuItem>
-                   <SidebarMenuItem>
-                     <SidebarMenuButton onClick={() => handleToolSelect('I have a homework question...')} tooltip={{ children: 'Homework Helper', side: 'right' }}>
-                       <GraduationCap /><span>Homework Helper</span>
-                     </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                     <SidebarMenuButton onClick={() => handleToolSelect('Write a report on...')} tooltip={{ children: 'Report Writer', side: 'right' }}>
-                       <Briefcase /><span>Report Writer</span>
-                     </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                     <SidebarMenuButton onClick={() => handleToolSelect('Create an image of...')} tooltip={{ children: 'Image Creator', side: 'right' }}>
-                       <PencilRuler /><span>Image Creator</span>
-                     </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                     <SidebarMenuButton onClick={() => handleToolSelect('Write some code to...')} tooltip={{ children: 'Code Interpreter', side: 'right' }}>
-                       <BrainCircuit /><span>Code Interpreter</span>
-                     </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-            
-            <SidebarGroup className="mt-4">
-              <SidebarGroupLabel>History</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {conversations.slice(0,10).map(convo => {
-                    const firstUserMessage = convo.messages.find(m => m.role === 'user');
-                    let title = 'Chat';
-                    if (firstUserMessage?.text && typeof firstUserMessage.text === 'string' && firstUserMessage.text.trim()) {
-                      title = firstUserMessage.text.substring(0, 25) + (firstUserMessage.text.length > 25 ? '...' : '')
-                    } else if (convo.messages.length > 1) {
-                      const firstAssistantMessage = convo.messages.find(m => m.role === 'assistant');
-                       if (firstAssistantMessage?.text && typeof firstAssistantMessage.text === 'string' && firstAssistantMessage.text.trim()) {
-                         title = "AI: " + firstAssistantMessage.text.substring(0, 20) + (firstAssistantMessage.text.length > 20 ? '...' : '')
-                       }
-                    }
-                    
-
-                    return (
-                        <SidebarMenuItem key={convo.id}>
-                          <div className='flex items-center w-full'>
-                            <SidebarMenuButton
-                              onClick={() => setActiveConversationId(convo.id)}
-                              isActive={activeConversationId === convo.id}
-                              tooltip={{ children: title, side: 'right' }}
-                              className="w-full"
-                            >
-                              <MessageSquare className="size-4" />
-                              <span>{title}</span>
-                            </SidebarMenuButton>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 opacity-50 hover:opacity-100">
-                                  <Trash2 className="size-3"/>
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete this conversation.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => deleteConversation(convo.id)}>Delete</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarMenu>
-          <SidebarSeparator />
-          <SidebarFooter className="p-2">
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => setIsSettingsOpen(true)}
-                tooltip={{ children: 'Settings', side: 'right' }}
-                className="w-full"
-              >
-                <Settings className="size-4" />
-                <span>Settings</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <UserProfile />
-          </SidebarFooter>
-        </Sidebar>
-        <SidebarInset
-          className={cn('flex flex-col h-[100svh] animated-gradient')}
-        >
-          <ChatHeader />
+            <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={handleNewConversation}>
+                    <Plus className="mr-2 h-4 w-4" /> New Chat
+                </Button>
+                <HistoryMenu />
+                {isLoggedIn ? <UserMenu /> : <Button onClick={() => setIsLoggedIn(true)}>Login</Button>}
+            </div>
+        </ChatHeader>
+        <div className="flex-1 flex flex-col min-h-0">
           <ChatMessages messages={activeConversation?.messages || []} isLoading={isLoading} />
+          
+          <div className="px-4">
+              <div className="relative group">
+                  <div className="conversation-starters no-scrollbar">
+                      {conversationStarters.map((starter, index) => (
+                          <div key={index} className="starter-card">
+                              <Tooltip>
+                                  <TooltipTrigger asChild>
+                                      <Button variant="outline" className="shrink-0" onClick={() => handleStarterSelect(starter.prompt)}>
+                                          <starter.icon className="mr-2 h-4 w-4" />
+                                          {starter.label}
+                                      </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                      <p>{starter.prompt}</p>
+                                  </TooltipContent>
+                              </Tooltip>
+                          </div>
+                      ))}
+                  </div>
+              </div>
+          </div>
+          
           <ChatInput
             onSendMessage={handleSendMessage}
             isLoading={isLoading}
             placeholder={'Ask me anything...'}
           />
-          {audioUrl && <AudioUrlProvider audioUrl={audioUrl} />}
-        </SidebarInset>
-      </SidebarProvider>
+        </div>
+        {audioUrl && <AudioPlayer audioUrl={audioUrl} />}
+      </div>
       <SettingsDialog
         open={isSettingsOpen}
         onOpenChange={setIsSettingsOpen}
@@ -462,18 +406,6 @@ export function ChatPage() {
         voice={voice}
         onVoiceChange={setVoice}
       />
-    </>
+    </TooltipProvider>
   );
-}
-
-function AudioUrlProvider({ audioUrl }: { audioUrl: string }) {
-  const [url, setUrl] = useState(audioUrl);
-
-  useEffect(() => {
-    setUrl(audioUrl);
-  }, [audioUrl]);
-
-  if (!url) return null;
-
-  return <AudioPlayer audioUrl={url} />;
 }

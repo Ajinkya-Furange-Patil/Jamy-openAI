@@ -105,7 +105,7 @@ export function SettingsDialog({
           <div className="space-y-2">
             <Label htmlFor="custom-instructions">Custom Instructions</Label>
             <p className="text-sm text-muted-foreground">
-              What would you like JAMY to know about you to provide better responses?
+              What would you like JAMY AI to know about you to provide better responses?
             </p>
             <Textarea
               id="custom-instructions"
@@ -116,9 +116,12 @@ export function SettingsDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label>Conversation</Label>
-            <Button variant="outline" onClick={handleClear}>
-              Clear History
+            <Label>Conversation History</Label>
+             <p className="text-sm text-muted-foreground">
+                This will permanently delete all your chat history.
+              </p>
+            <Button variant="destructive" onClick={handleClear}>
+              Clear All History
             </Button>
           </div>
         </div>

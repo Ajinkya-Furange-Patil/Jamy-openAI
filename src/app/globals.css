@@ -33,14 +33,6 @@ body {
     --chart-3: 0 0% 30%;
     --chart-4: 0 0% 80%;
     --chart-5: 0 0% 90%;
-    --sidebar-background: 0 0% 5%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 0 0% 98%;
-    --sidebar-primary-foreground: 0 0% 9%;
-    --sidebar-accent: 0 0% 15%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 0 0% 83%;
   }
   .dark {
     --background: 0 0% 7%;
@@ -67,14 +59,6 @@ body {
     --chart-3: 0 0% 30%;
     --chart-4: 0 0% 80%;
     --chart-5: 0 0% 90%;
-    --sidebar-background: 0 0% 5%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 0 0% 98%;
-    --sidebar-primary-foreground: 0 0% 9%;
-    --sidebar-accent: 0 0% 15%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 0 0% 83%;
   }
 }
 
@@ -130,5 +114,19 @@ body {
   @keyframes dot-flashing {
     0% { background-color: currentColor; }
     50%, 100% { background-color: rgba(156, 163, 175, 0.4); }
+  }
+
+  /* Sliding animation for conversation starters */
+  .conversation-starters {
+    @apply flex overflow-x-auto p-4 gap-3 transition-transform duration-300 ease-in-out;
+  }
+  .conversation-starters:hover > .starter-card {
+    transform: translateX(calc(-100% - 0.75rem)); /* Move card left on hover */
+  }
+  .starter-card {
+    @apply transition-transform duration-500 ease-in-out;
+  }
+  .starter-card:hover ~ .starter-card {
+    transform: translateX(calc(100% + 0.75rem)); /* Move subsequent cards right */
   }
 }
