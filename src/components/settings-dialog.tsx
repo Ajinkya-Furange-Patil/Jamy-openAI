@@ -21,6 +21,8 @@ interface SettingsDialogProps {
   onClearHistory: () => void;
   onCustomInstructionsChange: (instructions: string) => void;
   onVoiceChange: (voice: string) => void;
+  customInstructions: string;
+  voice: string;
 }
 
 const voices = [
@@ -38,19 +40,19 @@ export function SettingsDialog({
   onClearHistory,
   onCustomInstructionsChange,
   onVoiceChange,
+  customInstructions,
+  voice
 }: SettingsDialogProps) {
-  const [instructions, setInstructions] = useState('');
-  const [voice, setVoice] = useState('Algenib');
+  const [instructions, setInstructions] = useState(customInstructions);
+  const [currentVoice, setCurrentVoice] = useState(voice);
   const { toast } = useToast();
 
   useEffect(() => {
     if (open) {
-      const storedInstructions = localStorage.getItem('customInstructions') || '';
-      setInstructions(storedInstructions);
-      const storedVoice = localStorage.getItem('voice') || 'Algenib';
-      setVoice(storedVoice);
+      setInstructions(customInstructions);
+      setCurrentVoice(voice);
     }
-  }, [open]);
+  }, [open, customInstructions, voice]);
 
   const handleClear = () => {
     onClearHistory();
@@ -64,8 +66,8 @@ export function SettingsDialog({
   const handleSave = () => {
     localStorage.setItem('customInstructions', instructions);
     onCustomInstructionsChange(instructions);
-    localStorage.setItem('voice', voice);
-    onVoiceChange(voice);
+    localStorage.setItem('voice', currentVoice);
+    onVoiceChange(currentVoice);
     toast({
       title: 'Success',
       description: 'Settings have been saved.',
@@ -85,7 +87,7 @@ export function SettingsDialog({
         <div className="grid gap-6 py-4">
           <div className="space-y-2">
               <Label htmlFor="voice">Voice Selection</Label>
-              <Select value={voice} onValueChange={setVoice}>
+              <Select value={currentVoice} onValueChange={setCurrentVoice}>
                 <SelectTrigger id="voice" className="w-full">
                   <SelectValue placeholder="Select a voice" />
                 </SelectTrigger>
@@ -103,7 +105,7 @@ export function SettingsDialog({
           <div className="space-y-2">
             <Label htmlFor="custom-instructions">Custom Instructions</Label>
             <p className="text-sm text-muted-foreground">
-              What would you like Yadi AI to know about you to provide better responses?
+              What would you like JAMY to know about you to provide better responses?
             </p>
             <Textarea
               id="custom-instructions"

@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
-  title: 'Yadi AI - Your Advanced AI Assistant',
+  title: 'JAMY - Your Advanced AI Assistant',
   description: 'An intelligent, multi-tool AI assistant for chat, summarization, email drafting, translation, academic help, professional writing, and image creation.',
 };
 

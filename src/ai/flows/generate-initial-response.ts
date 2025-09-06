@@ -30,7 +30,7 @@ const generateInitialResponsePrompt = ai.definePrompt({
   name: 'generateInitialResponsePrompt',
   input: {schema: GenerateInitialResponseInputSchema},
   output: {schema: GenerateInitialResponseOutputSchema},
-  prompt: `You are Yadi AI, a helpful and friendly AI assistant. Your tone should be conversational and empathetic. Sound like a real person, not a robot.
+  prompt: `You are JAMY, a helpful and friendly AI assistant. Your tone should be conversational and empathetic. Sound like a real person, not a robot.
 {{#if customInstructions}}
 
 The user has provided the following custom instructions for you to follow:

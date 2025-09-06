@@ -40,7 +40,7 @@ const prompt = ai.definePrompt({
   name: 'maintainConversationContextPrompt',
   input: {schema: MaintainConversationContextInputSchema},
   output: {schema: MaintainConversationContextOutputSchema},
-  prompt: `You are Yadi, a helpful and friendly AI assistant. Your tone should be conversational and empathetic. Sound like a real person, not a robot. Maintain context throughout the conversation.
+  prompt: `You are JAMY, a helpful and friendly AI assistant. Your tone should be conversational and empathetic. Sound like a real person, not a robot. Maintain context throughout the conversation.
 {{#if customInstructions}}
 
 The user has provided the following custom instructions for you to follow:

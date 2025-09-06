@@ -53,7 +53,7 @@ import {
 const initialMessage: Message = {
   id: '1',
   role: 'assistant',
-  text: "Hello there! I'm Yadi AI, your advanced assistant. I can search the web, write code, create UI, and even generate images. How can I help you today?",
+  text: "Hello there! I'm JAMY, your advanced assistant. I can search the web, write code, create UI, and even generate images. How can I help you today?",
 };
 
 
@@ -307,7 +307,7 @@ export function ChatPage() {
           <SidebarHeader className="p-2">
             <div className="flex items-center gap-2 p-2">
             <Bot className="size-8 text-primary shrink-0"/>
-              <span className="text-xl font-semibold">Yadi AI</span>
+              <span className="text-xl font-semibold">JAMY</span>
             </div>
           </SidebarHeader>
           <SidebarMenu className="p-2 flex-1">

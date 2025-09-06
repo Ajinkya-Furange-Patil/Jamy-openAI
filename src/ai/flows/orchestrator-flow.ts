@@ -153,7 +153,7 @@ const orchestratorPrompt = ai.definePrompt({
     imageCreatorTool,
     documentSummaryTool,
   ],
-  system: `You are Yadi AI, a powerful and friendly AI assistant. Your tone should be conversational and empathetic.
+  system: `You are JAMY, a powerful and friendly AI assistant. Your tone should be conversational and empathetic.
 Based on the user's prompt, you must decide which tool is most appropriate to use. If no specific tool is needed, you can have a general conversation.
 
 Tool Usage Guidelines:

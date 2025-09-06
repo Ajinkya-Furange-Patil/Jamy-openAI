@@ -9,7 +9,7 @@ export function ChatHeader() {
         <h2 className="text-lg font-semibold">Conversation</h2>
       </div>
       <div className="flex items-center gap-2">
-        <Badge variant="outline" className="hidden sm:inline-flex bg-background">Yadi AI</Badge>
+        <Badge variant="outline" className="hidden sm:inline-flex bg-background">JAMY</Badge>
       </div>
     </header>
   );
