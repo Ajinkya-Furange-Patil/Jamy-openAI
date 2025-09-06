@@ -1,6 +1,7 @@
 
 'use server';
 
+import 'dotenv/config';
 import {convertTextToSpeech} from '@/ai/flows/text-to-speech';
 import type {Message} from '@/lib/types';
 import {OpenAI} from 'openai';
