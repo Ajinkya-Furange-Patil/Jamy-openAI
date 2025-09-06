@@ -2,12 +2,11 @@
 import 'dotenv/config';
 
 import type { Message } from '@/lib/types';
-import { orchestratorFlow } from '@/ai/flows/orchestrator-flow';
 import { convertTextToSpeech } from '@/ai/flows/text-to-speech';
+import { OpenAI } from 'openai';
 import { ReactNode } from 'react';
 
 // Helper to convert ReactNode to a string for the AI.
-// This should only handle simple cases on the server.
 const extractTextFromMessage = (node: ReactNode): string => {
     if (typeof node === 'string') {
       return node;
@@ -18,11 +17,17 @@ const extractTextFromMessage = (node: ReactNode): string => {
     if (Array.isArray(node)) {
       return node.map(extractTextFromMessage).join('');
     }
-    if ('props' in node && node.props.children) {
+    if (node && typeof node === 'object' && 'props' in node && node.props.children) {
       return extractTextFromMessage(node.props.children);
     }
     return '';
 };
+
+
+const client = new OpenAI({
+	baseURL: "https://router.huggingface.co/v1",
+	apiKey: process.env.HF_TOKEN,
+});
 
 
 export async function sendMessage(
@@ -38,14 +43,21 @@ export async function sendMessage(
       userMessageContent += `\n\n--- Attached Document ---\n${documentText}`;
     }
 
-    const flowResult = await orchestratorFlow({
-      prompt: userMessageContent,
-      history: history,
-      customInstructions: customInstructions,
-    });
+    const messagesForApi = history.map(msg => ({
+        role: msg.role === 'assistant' ? 'assistant' : 'user',
+        content: extractTextFromMessage(msg.text),
+    }));
     
-    const aiResponse = flowResult.response;
-    const aiResponseContent = flowResult.content;
+    messagesForApi.push({ role: 'user', content: userMessageContent });
+
+
+    const chatCompletion = await client.chat.completions.create({
+        model: "openai/gpt-oss-20b:hyperbolic",
+        messages: messagesForApi,
+    });
+
+    const aiResponse = chatCompletion.choices[0].message?.content || null;
+    let aiResponseContent = null;
 
     if (!aiResponse) {
       return {
