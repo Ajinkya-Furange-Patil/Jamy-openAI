@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { Plus, User, Settings, NotebookText, Mail, Languages, GraduationCap, Briefcase, Trash2, Bot, PencilRuler, BrainCircuit, History, Pencil } from 'lucide-react';
 import { ChatHeader } from '@/components/chat-header';
 import { ChatMessages } from '@/components/chat-messages';
@@ -169,10 +169,11 @@ export function ChatPage() {
 
   const handleSendMessage = async (input: string, file?: File) => {
     if (isLoading || (!input.trim() && !file) || !activeConversation) return;
-
-    let messageText: React.ReactNode = input;
+  
+    let messageTextForUi: ReactNode = input;
+    let messageTextForApi = input;
     let documentText: string | undefined;
-
+  
     if (file) {
       if (!file.type.startsWith('text/')) {
         toast({
@@ -190,12 +191,15 @@ export function ChatPage() {
             <span className="truncate">{file.name}</span>
           </Badge>
         );
-        messageText = (
+  
+        messageTextForUi = (
           <div className="flex flex-col gap-2">
             {input && <span>{input}</span>}
             {fileBadge}
           </div>
         );
+        // For the API, we just append a note about the file. The content is sent separately.
+        messageTextForApi = `${input}\n\n[User attached file: ${file.name}]`;
       } catch (error) {
         toast({
           variant: 'destructive',
@@ -205,31 +209,35 @@ export function ChatPage() {
         return;
       }
     }
-
+  
     const userMessage: Message = {
       id: String(Date.now()),
       role: 'user',
-      text: messageText,
+      text: messageTextForUi,
     };
+  
+    const currentHistory = activeConversation.messages.map(m => ({
+        ...m,
+        text: typeof m.text === 'string' ? m.text : `[Complex message content]`
+    }));
 
-    const currentHistory = activeConversation.messages;
     updateActiveConversation(c => ({
       ...c,
       messages: [...c.messages, userMessage],
     }));
     setIsLoading(true);
     setAudioUrl('');
-
+  
     const result = await sendMessage(
       currentHistory,
-      input,
+      messageTextForApi,
       documentText,
       customInstructions,
       voice
     );
-
+  
     setIsLoading(false);
-
+  
     if (result.error) {
       toast({
         variant: 'destructive',
@@ -242,7 +250,7 @@ export function ChatPage() {
       }));
       return;
     }
-
+  
     if (result.aiResponse) {
       const aiMessage: Message = {
         id: String(Date.now() + 1),
@@ -260,7 +268,7 @@ export function ChatPage() {
         messages: c.messages.slice(0, -1),
       }));
     }
-
+  
     if (result.audioUrl) {
       setAudioUrl(result.audioUrl);
     }
@@ -347,21 +355,31 @@ export function ChatPage() {
                     <>
                       <span className='truncate pr-2 flex-1'>{title}</span>
                       <div className="flex items-center">
-                        <Button
-                          variant="ghost" size="icon" className="h-6 w-6 shrink-0 opacity-50 hover:opacity-100"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingConversationId(convo.id);
-                            setEditingTitle(convo.title || '');
-                          }}
-                        >
-                          <Pencil className="size-3" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost" size="icon" className="h-6 w-6 shrink-0 opacity-50 hover:opacity-100"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingConversationId(convo.id);
+                                setEditingTitle(convo.title || '');
+                              }}
+                            >
+                              <Pencil className="size-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>Rename</p></TooltipContent>
+                        </Tooltip>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 opacity-50 hover:opacity-100" onClick={(e) => e.stopPropagation()}>
-                              <Trash2 className="size-3"/>
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 opacity-50 hover:opacity-100" onClick={(e) => e.stopPropagation()}>
+                                  <Trash2 className="size-3"/>
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent><p>Delete</p></TooltipContent>
+                            </Tooltip>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>

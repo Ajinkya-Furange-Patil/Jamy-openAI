@@ -4,31 +4,11 @@
 import {convertTextToSpeech} from '@/ai/flows/text-to-speech';
 import type {Message} from '@/lib/types';
 import {OpenAI} from 'openai';
-import type { ReactNode } from 'react';
 
 const client = new OpenAI({
   baseURL: 'https://router.huggingface.co/v1',
   apiKey: process.env.HF_TOKEN,
 });
-
-// Helper function to extract plain text from ReactNode
-const extractTextFromMessage = (node: ReactNode): string => {
-    if (typeof node === 'string') {
-      return node;
-    }
-    if (typeof node === 'number') {
-      return String(node);
-    }
-    if (Array.isArray(node)) {
-      return node.map(extractTextFromMessage).join('');
-    }
-    // Check for valid React element with children
-    if (node && typeof node === 'object' && 'props' in node && node.props.children) {
-      const children = Array.isArray(node.props.children) ? node.props.children : [node.props.children];
-      return children.map(extractTextFromMessage).join('');
-    }
-    return '';
-  };
   
 
 export async function sendMessage(
@@ -42,7 +22,7 @@ export async function sendMessage(
     const formattedHistory: OpenAI.Chat.ChatCompletionMessageParam[] =
       history.map(msg => ({
         role: msg.role === 'user' ? 'user' : 'assistant',
-        content: extractTextFromMessage(msg.text),
+        content: msg.text as string,
       }));
 
     // Add the current user message to the history for the API call
@@ -81,7 +61,7 @@ export async function sendMessage(
 
     return {
       aiResponse: aiResponse,
-      aiResponseContent: null, // The new model doesn't have the structured content field
+aiResponseContent: null,
       audioUrl: ttsResult.media,
       error: null,
     };
