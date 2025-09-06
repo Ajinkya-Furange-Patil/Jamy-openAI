@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, User, Settings, NotebookText, Mail, Languages, GraduationCap, Briefcase, MessageSquare, Trash2, Bot } from 'lucide-react';
+import { Plus, User, Settings, NotebookText, Mail, Languages, GraduationCap, Briefcase, MessageSquare, Trash2, Bot, PencilRuler, BrainCircuit } from 'lucide-react';
 
 import {
   SidebarProvider,
@@ -66,7 +66,6 @@ export function ChatPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [customInstructions, setCustomInstructions] = useState('');
   const [voice, setVoice] = useState<string>('Algenib');
-  const [currentTool, setCurrentTool] = useState('chat');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -78,17 +77,24 @@ export function ChatPage() {
     if (storedVoice) setVoice(storedVoice);
 
     if (storedConversations) {
-      const parsedConvos = JSON.parse(storedConversations);
-      if (parsedConvos.length > 0) {
-        setConversations(parsedConvos);
-        setActiveConversationId(parsedConvos[0].id);
-        return;
+      try {
+        const parsedConvos = JSON.parse(storedConversations);
+        if (Array.isArray(parsedConvos) && parsedConvos.length > 0) {
+          setConversations(parsedConvos);
+          setActiveConversationId(parsedConvos[0].id);
+          return;
+        }
+      } catch (e) {
+         console.error("Failed to parse conversations from localStorage", e);
+         // If parsing fails, start with a new conversation
       }
     }
     handleNewConversation();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
+    // Avoid saving empty conversations array on initial load
     if (conversations.length > 0) {
       localStorage.setItem('conversations', JSON.stringify(conversations));
     }
@@ -110,30 +116,33 @@ export function ChatPage() {
     setConversations(prev => [newConversation, ...prev]);
     setActiveConversationId(newConversation.id);
     setAudioUrl('');
-    setCurrentTool('chat');
   };
 
   const deleteConversation = (id: string) => {
-    setConversations(prev => prev.filter(c => c.id !== id));
+    const remainingConversations = conversations.filter(c => c.id !== id);
+    setConversations(remainingConversations);
+    
     if (activeConversationId === id) {
-      const remainingConversations = conversations.filter(c => c.id !== id);
       if (remainingConversations.length > 0) {
         setActiveConversationId(remainingConversations[0].id);
       } else {
         handleNewConversation();
       }
     }
+    // If we delete all conversations, clear from storage as well
+    if (remainingConversations.length === 0) {
+        localStorage.removeItem('conversations');
+    }
   }
 
-  const handleToolSelect = (tool: string, prompt?: string) => {
-    setCurrentTool(tool);
-    if(prompt) {
-        const input = document.querySelector('textarea');
-        if (input) {
-            input.value = prompt;
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-            input.focus();
-        }
+  const handleToolSelect = (prompt: string) => {
+    const textarea = document.querySelector('textarea');
+    if (textarea) {
+      // A little trick to programmatically update the textarea value and its state
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value")?.set;
+      nativeInputValueSetter?.call(textarea, prompt);
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      textarea.focus();
     }
   };
 
@@ -191,6 +200,8 @@ export function ChatPage() {
       text: messageText,
     };
 
+    const currentHistory = activeConversation.messages;
+
     updateActiveConversation(c => ({
       ...c,
       messages: [...c.messages, userMessage],
@@ -200,7 +211,7 @@ export function ChatPage() {
     setAudioUrl('');
 
     const result = await sendMessage(
-      activeConversation.messages,
+      currentHistory,
       input,
       documentText,
       customInstructions,
@@ -215,6 +226,7 @@ export function ChatPage() {
         title: 'Error',
         description: result.error,
       });
+      // Revert message on error
       updateActiveConversation(c => ({
         ...c,
         messages: c.messages.slice(0, -1),
@@ -232,6 +244,12 @@ export function ChatPage() {
       updateActiveConversation(c => ({
         ...c,
         messages: [...c.messages, aiMessage],
+      }));
+    } else {
+       // Revert message if no response
+       updateActiveConversation(c => ({
+        ...c,
+        messages: c.messages.slice(0, -1),
       }));
     }
 
@@ -303,6 +321,49 @@ export function ChatPage() {
                 <span>New Conversation</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
+
+             <SidebarGroup className="mt-4">
+              <SidebarGroupLabel>Features</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => handleToolSelect('Summarize the following document:')} tooltip={{ children: 'Summarize', side: 'right' }}>
+                      <NotebookText /><span>Summarize</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => handleToolSelect('Draft an email to...')} tooltip={{ children: 'Email Assistant', side: 'right' }}>
+                      <Mail /><span>Email Assistant</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                     <SidebarMenuButton onClick={() => handleToolSelect('Translate the following text to...')} tooltip={{ children: 'Translate', side: 'right' }}>
+                       <Languages /><span>Translate</span>
+                     </SidebarMenuButton>
+                  </SidebarMenuItem>
+                   <SidebarMenuItem>
+                     <SidebarMenuButton onClick={() => handleToolSelect('I have a homework question...')} tooltip={{ children: 'Homework Helper', side: 'right' }}>
+                       <GraduationCap /><span>Homework Helper</span>
+                     </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                     <SidebarMenuButton onClick={() => handleToolSelect('Write a report on...')} tooltip={{ children: 'Report Writer', side: 'right' }}>
+                       <Briefcase /><span>Report Writer</span>
+                     </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                     <SidebarMenuButton onClick={() => handleToolSelect('Create an image of...')} tooltip={{ children: 'Image Creator', side: 'right' }}>
+                       <PencilRuler /><span>Image Creator</span>
+                     </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                     <SidebarMenuButton onClick={() => handleToolSelect('Write some code to...')} tooltip={{ children: 'Code Interpreter', side: 'right' }}>
+                       <BrainCircuit /><span>Code Interpreter</span>
+                     </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
             
             <SidebarGroup className="mt-4">
               <SidebarGroupLabel>History</SidebarGroupLabel>
@@ -310,40 +371,49 @@ export function ChatPage() {
                 <SidebarMenu>
                   {conversations.slice(0,10).map(convo => {
                     const firstUserMessage = convo.messages.find(m => m.role === 'user');
-                    const title = typeof firstUserMessage?.text === 'string' 
-                      ? firstUserMessage.text.substring(0, 25) + (firstUserMessage.text.length > 25 ? '...' : '') 
-                      : 'Chat';
+                    let title = 'Chat';
+                    if (firstUserMessage?.text && typeof firstUserMessage.text === 'string' && firstUserMessage.text.trim()) {
+                      title = firstUserMessage.text.substring(0, 25) + (firstUserMessage.text.length > 25 ? '...' : '')
+                    } else if (convo.messages.length > 1) {
+                      const firstAssistantMessage = convo.messages.find(m => m.role === 'assistant');
+                       if (firstAssistantMessage?.text && typeof firstAssistantMessage.text === 'string' && firstAssistantMessage.text.trim()) {
+                         title = "AI: " + firstAssistantMessage.text.substring(0, 20) + (firstAssistantMessage.text.length > 20 ? '...' : '')
+                       }
+                    }
+                    
 
                     return (
                         <SidebarMenuItem key={convo.id}>
-                          <SidebarMenuButton
-                            onClick={() => setActiveConversationId(convo.id)}
-                            isActive={activeConversationId === convo.id}
-                            tooltip={{ children: title, side: 'right' }}
-                            className="w-full"
-                          >
-                            <MessageSquare className="size-4" />
-                            <span>{title}</span>
-                          </SidebarMenuButton>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="absolute right-1 top-1 h-6 w-6 opacity-0 group-hover/menu-item:opacity-100">
-                                <Trash2 className="size-3"/>
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete this conversation.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => deleteConversation(convo.id)}>Delete</AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                          <div className='flex items-center w-full'>
+                            <SidebarMenuButton
+                              onClick={() => setActiveConversationId(convo.id)}
+                              isActive={activeConversationId === convo.id}
+                              tooltip={{ children: title, side: 'right' }}
+                              className="w-full"
+                            >
+                              <MessageSquare className="size-4" />
+                              <span>{title}</span>
+                            </SidebarMenuButton>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 opacity-50 hover:opacity-100">
+                                  <Trash2 className="size-3"/>
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete this conversation.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => deleteConversation(convo.id)}>Delete</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
                         </SidebarMenuItem>
                     );
                   })}
@@ -384,9 +454,12 @@ export function ChatPage() {
         onOpenChange={setIsSettingsOpen}
         onClearHistory={() => {
           localStorage.removeItem('conversations');
+          setConversations([]);
           handleNewConversation();
         }}
+        customInstructions={customInstructions}
         onCustomInstructionsChange={setCustomInstructions}
+        voice={voice}
         onVoiceChange={setVoice}
       />
     </>
