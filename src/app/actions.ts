@@ -1,10 +1,10 @@
 
 'use server';
 
-import React from 'react';
 import {convertTextToSpeech} from '@/ai/flows/text-to-speech';
 import type {Message} from '@/lib/types';
 import {OpenAI} from 'openai';
+import type { ReactNode } from 'react';
 
 const client = new OpenAI({
   baseURL: 'https://router.huggingface.co/v1',
@@ -12,22 +12,24 @@ const client = new OpenAI({
 });
 
 // Helper function to extract plain text from ReactNode
-const extractText = (node: React.ReactNode): string => {
-  if (typeof node === 'string') {
-    return node;
-  }
-  if (typeof node === 'number') {
-    return String(node);
-  }
-  if (Array.isArray(node)) {
-    return node.map(extractText).join('');
-  }
-  if (React.isValidElement(node) && node.props.children) {
-    // This is a simplified version. For complex children, it might need more logic.
-    return React.Children.map(node.props.children, extractText).join('');
-  }
-  return '';
-};
+const extractTextFromMessage = (node: ReactNode): string => {
+    if (typeof node === 'string') {
+      return node;
+    }
+    if (typeof node === 'number') {
+      return String(node);
+    }
+    if (Array.isArray(node)) {
+      return node.map(extractTextFromMessage).join('');
+    }
+    // Check for valid React element with children
+    if (node && typeof node === 'object' && 'props' in node && node.props.children) {
+      const children = Array.isArray(node.props.children) ? node.props.children : [node.props.children];
+      return children.map(extractTextFromMessage).join('');
+    }
+    return '';
+  };
+  
 
 export async function sendMessage(
   history: Message[],
@@ -40,7 +42,7 @@ export async function sendMessage(
     const formattedHistory: OpenAI.Chat.ChatCompletionMessageParam[] =
       history.map(msg => ({
         role: msg.role === 'user' ? 'user' : 'assistant',
-        content: extractText(msg.text),
+        content: extractTextFromMessage(msg.text),
       }));
 
     // Add the current user message to the history for the API call
@@ -86,7 +88,7 @@ export async function sendMessage(
   } catch (e) {
     console.error(e);
     const errorMessage =
-      e instanceof Error ? e.message : 'An unknown error occurred.';
+      e instanceof Error ? e.message : 'An unexpected response was received from the server.';
     return {
       aiResponse: null,
       aiResponseContent: null,
