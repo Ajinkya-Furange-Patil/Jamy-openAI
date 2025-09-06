@@ -21,7 +21,7 @@ import {createImage} from './image-creator';
 import {generateDocumentSummary} from './generate-document-summary';
 import { codeInterpreterTool } from '../tools/code-interpreter';
 import { uiuxDesignerTool } from '../tools/uiux-designer';
-import { Message } from 'genkit';
+import type { Message } from 'genkit';
 
 // Define tools for the orchestrator to use
 const emailTool = ai.defineTool(
@@ -215,3 +215,5 @@ export const orchestratorFlow = ai.defineFlow(
     };
   }
 );
+
+    
