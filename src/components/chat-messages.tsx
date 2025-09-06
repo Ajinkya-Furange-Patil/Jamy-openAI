@@ -3,7 +3,7 @@ import { useEffect, useRef, memo } from 'react';
 import React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Bot, User } from 'lucide-react';
+import { Bot, User, Paperclip } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Message } from '@/lib/types';
 import Image from 'next/image';
@@ -11,6 +11,7 @@ import { CodeBlock } from './code-block';
 import {MemoizedReactMarkdown} from './markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
+import { Badge } from './ui/badge';
 
 interface ChatMessagesProps {
   messages: Message[];
@@ -39,58 +40,66 @@ function GeneratedImage({ src }: { src: string }) {
 }
 
 const MessageContent = memo(({ message }: { message: Message }) => {
-  if (typeof message.text !== 'string') {
-    return <>{message.text}</>;
-  }
-
-  return (
-      <MemoizedReactMarkdown
-          className="prose-sm prose-neutral dark:prose-invert prose-p:my-0 prose-pre:my-2"
-          remarkPlugins={[remarkGfm, remarkMath]}
-          components={{
-              p({children}) {
-                  return <p className="mb-2 last:mb-0">{children}</p>
-              },
-              code({node, inline, className, children, ...props}) {
-                  if (children && children.length) {
-                      if (children[0] == '▍') {
-                          return (
-                              <span className="mt-1 animate-pulse cursor-default">▍</span>
-                          )
-                      }
-                      
-                      const childrenArray = React.Children.toArray(children);
-                      if (typeof childrenArray[0] === 'string') {
-                        childrenArray[0] = childrenArray[0].replace('`▍`', '▍');
-                      }
-                      children = childrenArray;
-                  }
-
-                  const match = /language-(\w+)/.exec(className || '')
-
-                  if (inline) {
-                      return (
-                          <code className={className} {...props}>
-                              {children}
-                          </code>
-                      )
-                  }
-
-                  return (
-                      <CodeBlock
-                          key={Math.random()}
-                          language={(match && match[1]) || ''}
-                          code={String(children).replace(/\n$/, '')}
-                          {...props}
-                      />
-                  )
-              }
-          }}
-      >
-          {message.text}
-      </MemoizedReactMarkdown>
-  );
-});
+    const messageText = typeof message.text === 'string' ? message.text : '';
+    
+    return (
+      <div className="space-y-2">
+        {messageText && (
+            <MemoizedReactMarkdown
+                className="prose-sm prose-neutral dark:prose-invert prose-p:my-0 prose-pre:my-2"
+                remarkPlugins={[remarkGfm, remarkMath]}
+                components={{
+                    p({children}) {
+                        return <p className="mb-2 last:mb-0">{children}</p>
+                    },
+                    code({node, inline, className, children, ...props}) {
+                        if (children && children.length) {
+                            if (children[0] == '▍') {
+                                return (
+                                    <span className="mt-1 animate-pulse cursor-default">▍</span>
+                                )
+                            }
+                            
+                            const childrenArray = React.Children.toArray(children);
+                            if (typeof childrenArray[0] === 'string') {
+                                childrenArray[0] = (childrenArray[0] as string).replace('`▍`', '▍');
+                            }
+                            children = childrenArray;
+                        }
+  
+                        const match = /language-(\w+)/.exec(className || '')
+  
+                        if (inline) {
+                            return (
+                                <code className={className} {...props}>
+                                    {children}
+                                </code>
+                            )
+                        }
+  
+                        return (
+                            <CodeBlock
+                                key={Math.random()}
+                                language={(match && match[1]) || ''}
+                                code={String(children).replace(/\n$/, '')}
+                                {...props}
+                            />
+                        )
+                    }
+                }}
+            >
+                {messageText}
+            </MemoizedReactMarkdown>
+        )}
+        {message.attachment && (
+            <Badge variant="outline" className="flex items-center gap-2 max-w-xs mt-2">
+                <Paperclip className="h-4 w-4" />
+                <span className="truncate">{message.attachment.name}</span>
+            </Badge>
+        )}
+      </div>
+    );
+  });
 MessageContent.displayName = 'MessageContent';
 
 
@@ -128,7 +137,7 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
                   : 'bg-muted'
               )}
             >
-              <div className="text-sm whitespace-pre-wrap space-y-2">
+              <div className="text-sm whitespace-pre-wrap">
                 <MessageContent message={message} />
               </div>
               {message.content && typeof message.content === 'string' && message.content.startsWith('data:image') && (

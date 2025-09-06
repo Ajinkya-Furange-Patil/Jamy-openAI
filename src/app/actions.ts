@@ -6,8 +6,8 @@ import { convertTextToSpeech } from '@/ai/flows/text-to-speech';
 import { OpenAI } from 'openai';
 import { ReactNode } from 'react';
 
-// Helper to convert ReactNode to a string for the AI.
-// This is a simplified version that handles the specific structures used in this app.
+// This is a server-side only helper to extract plain text from React nodes.
+// It's a simplified version that handles the specific structures used in this app.
 const extractTextFromMessage = (node: ReactNode): string => {
     if (typeof node === 'string') {
       return node;
@@ -18,17 +18,8 @@ const extractTextFromMessage = (node: ReactNode): string => {
     if (Array.isArray(node)) {
       return node.map(extractTextFromMessage).join('');
     }
-    // Check for a specific structure: a div with children
     if (typeof node === 'object' && 'props' in node && node.props.children) {
-        const children = node.props.children;
-        if (Array.isArray(children)) {
-             // Look for a span with text content, ignore the badge
-            const textChild = children.find(child => child.type === 'span');
-            if (textChild) {
-                return extractTextFromMessage(textChild.props.children);
-            }
-        }
-       return extractTextFromMessage(children);
+        return extractTextFromMessage(node.props.children);
     }
     return '';
 };
@@ -58,7 +49,7 @@ export async function sendMessage(
         content: extractTextFromMessage(msg.text),
     }));
     
-    // Add the current user message, making sure it's just plain text
+    // Add the current user message
     messagesForApi.push({ role: 'user', content: userMessageContent });
 
 

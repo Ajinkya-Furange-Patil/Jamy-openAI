@@ -5,8 +5,11 @@ export interface Message {
   id: string;
   role: 'user' | 'assistant';
   text: ReactNode;
-  content?: ReactNode;
-  audioUrl?: string;
+  content?: ReactNode; // For rich content like images
+  attachment?: {
+    name: string;
+    type: string;
+  };
 }
 
 export interface Conversation {

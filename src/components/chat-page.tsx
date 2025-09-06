@@ -170,9 +170,9 @@ export function ChatPage() {
   const handleSendMessage = async (input: string, file?: File) => {
     if (isLoading || (!input.trim() && !file) || !activeConversation) return;
   
-    let messageTextForUi: ReactNode = input;
-    let messageTextForApi = input;
+    let userMessage: Message;
     let documentText: string | undefined;
+    let textForApi = input;
   
     if (file) {
       if (!file.type.startsWith('text/')) {
@@ -185,21 +185,20 @@ export function ChatPage() {
       }
       try {
         documentText = await fileToText(file);
-        const fileBadge = (
-          <Badge variant="outline" className="flex items-center gap-2 max-w-xs">
-            <Paperclip className="h-4 w-4" />
-            <span className="truncate">{file.name}</span>
-          </Badge>
-        );
-  
-        messageTextForUi = (
-          <div className="flex flex-col gap-2">
-            {input && <span>{input}</span>}
-            {fileBadge}
-          </div>
-        );
+        
         // For the API, we just append a note about the file. The content is sent separately.
-        messageTextForApi = `${input}\n\n[User attached file: ${file.name}]`;
+        textForApi = `${input}\n\n[User attached file: ${file.name}]`;
+        
+        userMessage = {
+            id: String(Date.now()),
+            role: 'user',
+            text: input,
+            attachment: {
+                name: file.name,
+                type: file.type,
+            }
+        };
+
       } catch (error) {
         toast({
           variant: 'destructive',
@@ -208,18 +207,15 @@ export function ChatPage() {
         });
         return;
       }
+    } else {
+        userMessage = {
+            id: String(Date.now()),
+            role: 'user',
+            text: input,
+        };
     }
   
-    const userMessage: Message = {
-      id: String(Date.now()),
-      role: 'user',
-      text: messageTextForUi,
-    };
-  
-    const currentHistory = activeConversation.messages.map(m => ({
-        ...m,
-        text: typeof m.text === 'string' ? m.text : `[Complex message content]`
-    }));
+    const currentHistory = activeConversation.messages;
 
     updateActiveConversation(c => ({
       ...c,
@@ -230,7 +226,7 @@ export function ChatPage() {
   
     const result = await sendMessage(
       currentHistory,
-      messageTextForApi,
+      textForApi,
       documentText,
       customInstructions,
       voice
@@ -327,8 +323,9 @@ export function ChatPage() {
         <div className="max-h-96 overflow-y-auto">
           {conversations.length > 0 ? (
             conversations.map(convo => {
-              const defaultTitle = convo.messages.find(m => m.role === 'user')?.text;
-              const title = convo.title || (typeof defaultTitle === 'string' ? (defaultTitle.substring(0, 35) + (defaultTitle.length > 35 ? '...' : '')) : 'Chat');
+                const userMessage = convo.messages.find(m => m.role === 'user');
+                const defaultTitle = userMessage ? (typeof userMessage.text === 'string' ? userMessage.text : 'Chat with attachment') : 'New Chat';
+                const title = convo.title || (defaultTitle.substring(0, 35) + (defaultTitle.length > 35 ? '...' : ''));
              
               return (
                 <DropdownMenuItem
