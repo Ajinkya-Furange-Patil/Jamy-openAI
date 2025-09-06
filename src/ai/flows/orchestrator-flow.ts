@@ -174,14 +174,6 @@ The user has provided the following custom instructions for you to follow:
 {{customInstructions}}
 ---
 {{/if}}`,
-  prompt: `User prompt: {{prompt}}
-{{#if documentText}}
-Attached document content:
----
-{{documentText}}
----
-{{/if}}
-`,
   config: {
     history: '{{history}}',
     safetySettings: [
@@ -191,6 +183,14 @@ Attached document content:
       { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_LOW_AND_ABOVE' },
     ],
   },
+  prompt: `User prompt: {{prompt}}
+{{#if documentText}}
+Attached document content:
+---
+{{documentText}}
+---
+{{/if}}
+`,
 });
 
 export const orchestratorFlow = ai.defineFlow(
@@ -215,5 +215,3 @@ export const orchestratorFlow = ai.defineFlow(
     };
   }
 );
-
-    

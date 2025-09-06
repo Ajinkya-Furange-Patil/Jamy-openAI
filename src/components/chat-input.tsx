@@ -107,6 +107,7 @@ export function ChatInput({ onSendMessage, isLoading, placeholder }: ChatInputPr
     setFile(null);
     if(isRecording) {
         recognitionRef.current?.stop();
+        setIsRecording(false);
     }
     if (fileInputRef.current) {
         fileInputRef.current.value = '';

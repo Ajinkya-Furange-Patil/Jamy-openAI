@@ -20,14 +20,12 @@ export async function sendMessage(
     }));
 
 
-    const orchestratorPromise = orchestratorFlow({
+    const orchestratorResult = await orchestratorFlow({
       prompt: message,
       documentText,
       history: genkitHistory,
       customInstructions,
     });
-
-    const [orchestratorResult] = await Promise.all([orchestratorPromise]);
     
     if (!orchestratorResult.text) {
       return {
@@ -38,9 +36,7 @@ export async function sendMessage(
       };
     }
     
-    const ttsPromise = convertTextToSpeech({text: orchestratorResult.text, voice});
-
-    const ttsResult = await ttsPromise;
+    const ttsResult = await convertTextToSpeech({text: orchestratorResult.text, voice});
     
     return {
       aiResponse: orchestratorResult.text,
