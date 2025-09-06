@@ -4,6 +4,7 @@
 import {convertTextToSpeech} from '@/ai/flows/text-to-speech';
 import { orchestratorFlow } from '@/ai/flows/orchestrator-flow';
 import type { Message } from '@/lib/types';
+import { Message as GenkitMessage } from 'genkit';
 
 export async function sendMessage(
   history: Message[],
@@ -13,7 +14,7 @@ export async function sendMessage(
   voice?: string,
 ) {
   try {
-    const genkitHistory = history.map(msg => ({
+    const genkitHistory: GenkitMessage[] = history.map(msg => ({
       role: msg.role === 'assistant' ? 'model' : 'user',
       content: [{ text: typeof msg.text === 'string' ? msg.text : 'User uploaded a file.' }], 
     }));

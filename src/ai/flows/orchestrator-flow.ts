@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -20,6 +21,7 @@ import {createImage} from './image-creator';
 import {generateDocumentSummary} from './generate-document-summary';
 import { codeInterpreterTool } from '../tools/code-interpreter';
 import { uiuxDesignerTool } from '../tools/uiux-designer';
+import { Message } from 'genkit';
 
 // Define tools for the orchestrator to use
 const emailTool = ai.defineTool(
@@ -123,7 +125,7 @@ const webSearchTool = ai.defineTool(
 const OrchestratorInputSchema = z.object({
   prompt: z.string().describe('The user prompt.'),
   documentText: z.string().optional().describe('Optional text content from a file.'),
-  history: z.array(z.any()).optional().describe('The conversation history.'),
+  history: z.array(z.custom<Message>()).optional().describe('The conversation history.'),
   customInstructions: z.string().optional().describe('Custom instructions for the AI persona.'),
 });
 export type OrchestratorInput = z.infer<typeof OrchestratorInputSchema>;
