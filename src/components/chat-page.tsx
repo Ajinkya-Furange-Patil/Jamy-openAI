@@ -43,13 +43,13 @@ const initialMessage: Message = {
 };
 
 const conversationStarters = [
-    { icon: NotebookText, label: 'Summarize', prompt: 'Summarize the following document:' },
-    { icon: Mail, label: 'Email Assistant', prompt: 'Draft an email to...' },
-    { icon: Languages, label: 'Translate', prompt: 'Translate the following text to...' },
-    { icon: GraduationCap, label: 'Homework Helper', prompt: 'I have a homework question...' },
-    { icon: Briefcase, label: 'Report Writer', prompt: 'Write a report on...' },
-    { icon: PencilRuler, label: 'Image Creator', prompt: 'Create an image of...' },
-    { icon: BrainCircuit, label: 'Code Interpreter', prompt: 'Write some code to...' },
+    { icon: NotebookText, label: 'Summarize Document', prompt: 'Summarize the following document:' },
+    { icon: Mail, label: 'Draft an Email', prompt: 'Draft an email to...' },
+    { icon: Languages, label: 'Translate Text', prompt: 'Translate the following text to...' },
+    { icon: GraduationCap, label: 'Homework Help', prompt: 'I have a homework question...' },
+    { icon: Briefcase, label: 'Write a Report', prompt: 'Write a report on...' },
+    { icon: PencilRuler, label: 'Create an Image', prompt: 'Create an image of...' },
+    { icon: BrainCircuit, label: 'Interpret Code', prompt: 'Write some code to...' },
 ];
 
 export function ChatPage() {
@@ -61,15 +61,18 @@ export function ChatPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [customInstructions, setCustomInstructions] = useState('');
   const [voice, setVoice] = useState<string>('Algenib');
+  const [autoPlayAudio, setAutoPlayAudio] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     const storedConversations = localStorage.getItem('conversations');
     const storedInstructions = localStorage.getItem('customInstructions');
     const storedVoice = localStorage.getItem('voice');
+    const storedAutoPlay = localStorage.getItem('autoPlayAudio');
 
     if (storedInstructions) setCustomInstructions(storedInstructions);
     if (storedVoice) setVoice(storedVoice);
+    if (storedAutoPlay) setAutoPlayAudio(JSON.parse(storedAutoPlay));
 
     if (storedConversations) {
       try {
@@ -364,27 +367,29 @@ export function ChatPage() {
         <div className="flex-1 flex flex-col min-h-0">
           <ChatMessages messages={activeConversation?.messages || []} isLoading={isLoading} />
           
-          <div className="px-4">
-              <div className="relative group">
-                  <div className="conversation-starters no-scrollbar">
-                      {conversationStarters.map((starter, index) => (
-                          <div key={index} className="starter-card">
-                              <Tooltip>
-                                  <TooltipTrigger asChild>
-                                      <Button variant="outline" className="shrink-0" onClick={() => handleStarterSelect(starter.prompt)}>
-                                          <starter.icon className="mr-2 h-4 w-4" />
-                                          {starter.label}
-                                      </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                      <p>{starter.prompt}</p>
-                                  </TooltipContent>
-                              </Tooltip>
-                          </div>
-                      ))}
-                  </div>
-              </div>
-          </div>
+          {!isLoading && (activeConversation?.messages.length ?? 0) <= 1 && (
+            <div className="px-4">
+                <div className="relative group">
+                    <div className="conversation-starters no-scrollbar">
+                        {conversationStarters.map((starter, index) => (
+                            <div key={index} className="starter-card">
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="outline" className="shrink-0" onClick={() => handleStarterSelect(starter.prompt)}>
+                                            <starter.icon className="mr-2 h-4 w-4" />
+                                            {starter.label}
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{starter.prompt}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+          )}
           
           <ChatInput
             onSendMessage={handleSendMessage}
@@ -392,7 +397,7 @@ export function ChatPage() {
             placeholder={'Ask me anything...'}
           />
         </div>
-        {audioUrl && <AudioPlayer audioUrl={audioUrl} />}
+        {audioUrl && <AudioPlayer audioUrl={audioUrl} autoPlay={autoPlayAudio}/>}
       </div>
       <SettingsDialog
         open={isSettingsOpen}
@@ -406,6 +411,8 @@ export function ChatPage() {
         onCustomInstructionsChange={setCustomInstructions}
         voice={voice}
         onVoiceChange={setVoice}
+        autoPlayAudio={autoPlayAudio}
+        onAutoPlayAudioChange={setAutoPlayAudio}
       />
     </TooltipProvider>
   );

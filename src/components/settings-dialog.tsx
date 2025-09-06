@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -14,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Switch } from './ui/switch';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -23,6 +25,8 @@ interface SettingsDialogProps {
   onVoiceChange: (voice: string) => void;
   customInstructions: string;
   voice: string;
+  autoPlayAudio: boolean;
+  onAutoPlayAudioChange: (autoPlay: boolean) => void;
 }
 
 const voices = [
@@ -41,18 +45,22 @@ export function SettingsDialog({
   onCustomInstructionsChange,
   onVoiceChange,
   customInstructions,
-  voice
+  voice,
+  autoPlayAudio,
+  onAutoPlayAudioChange
 }: SettingsDialogProps) {
   const [instructions, setInstructions] = useState(customInstructions);
   const [currentVoice, setCurrentVoice] = useState(voice);
+  const [currentAutoPlay, setCurrentAutoPlay] = useState(autoPlayAudio);
   const { toast } = useToast();
 
   useEffect(() => {
     if (open) {
       setInstructions(customInstructions);
       setCurrentVoice(voice);
+      setCurrentAutoPlay(autoPlayAudio);
     }
-  }, [open, customInstructions, voice]);
+  }, [open, customInstructions, voice, autoPlayAudio]);
 
   const handleClear = () => {
     onClearHistory();
@@ -66,8 +74,13 @@ export function SettingsDialog({
   const handleSave = () => {
     localStorage.setItem('customInstructions', instructions);
     onCustomInstructionsChange(instructions);
+    
     localStorage.setItem('voice', currentVoice);
     onVoiceChange(currentVoice);
+
+    localStorage.setItem('autoPlayAudio', JSON.stringify(currentAutoPlay));
+    onAutoPlayAudioChange(currentAutoPlay);
+
     toast({
       title: 'Success',
       description: 'Settings have been saved.',
@@ -85,7 +98,7 @@ export function SettingsDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
-          <div className="space-y-2">
+            <div className="space-y-2">
               <Label htmlFor="voice">Voice Selection</Label>
               <Select value={currentVoice} onValueChange={setCurrentVoice}>
                 <SelectTrigger id="voice" className="w-full">
@@ -100,30 +113,46 @@ export function SettingsDialog({
                <p className="text-sm text-muted-foreground">
                 Choose the voice for the text-to-speech feature.
               </p>
-          </div>
+            </div>
+            
+            <div className="space-y-2">
+               <Label>Audio Settings</Label>
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div className='space-y-0.5'>
+                    <p className='text-sm font-medium'>Auto-play audio</p>
+                    <p className="text-xs text-muted-foreground">
+                      Automatically play audio responses.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={currentAutoPlay}
+                    onCheckedChange={setCurrentAutoPlay}
+                  />
+              </div>
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="custom-instructions">Custom Instructions</Label>
-            <p className="text-sm text-muted-foreground">
-              What would you like JAMY AI to know about you to provide better responses?
-            </p>
-            <Textarea
-              id="custom-instructions"
-              placeholder="For example, 'I am a software engineer specializing in frontend development...'"
-              value={instructions}
-              onChange={(e) => setInstructions(e.target.value)}
-              className="min-h-[120px]"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Conversation History</Label>
-             <p className="text-sm text-muted-foreground">
-                This will permanently delete all your chat history.
-              </p>
-            <Button variant="destructive" onClick={handleClear}>
-              Clear All History
-            </Button>
-          </div>
+            <div className="space-y-2">
+                <Label htmlFor="custom-instructions">Custom Instructions</Label>
+                <p className="text-sm text-muted-foreground">
+                What would you like JAMY AI to know about you to provide better responses?
+                </p>
+                <Textarea
+                id="custom-instructions"
+                placeholder="For example, 'I am a software engineer specializing in frontend development...'"
+                value={instructions}
+                onChange={(e) => setInstructions(e.target.value)}
+                className="min-h-[120px]"
+                />
+            </div>
+            <div className="space-y-2">
+                <Label>Conversation History</Label>
+                <p className="text-sm text-muted-foreground">
+                    This will permanently delete all your chat history.
+                </p>
+                <Button variant="destructive" onClick={handleClear}>
+                Clear All History
+                </Button>
+            </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>

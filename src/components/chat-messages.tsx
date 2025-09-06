@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+
+import { useEffect, useRef, memo } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Bot, User } from 'lucide-react';
@@ -6,6 +7,9 @@ import { cn } from '@/lib/utils';
 import type { Message } from '@/lib/types';
 import Image from 'next/image';
 import { CodeBlock } from './code-block';
+import {MemoizedReactMarkdown} from './markdown';
+import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
 
 interface ChatMessagesProps {
   messages: Message[];
@@ -33,24 +37,57 @@ function GeneratedImage({ src }: { src: string }) {
   );
 }
 
-const MemoizedCodeBlock = ({ text }: { text: string }) => {
-  const match = /```(\w*)\n([\s\S]*?)```/.exec(text);
-  if (match) {
-    const language = match[1] || 'text';
-    const code = match[2];
-    const precedingText = text.substring(0, match.index);
-    const followingText = text.substring(match.index + match[0].length);
-
-    return (
-      <>
-        {precedingText && <p>{precedingText}</p>}
-        <CodeBlock language={language} code={code} />
-        {followingText && <p>{followingText}</p>}
-      </>
-    );
+const MessageContent = memo(({ message }: { message: Message }) => {
+  if (typeof message.text !== 'string') {
+    return <>{message.text}</>;
   }
-  return <p>{text}</p>;
-};
+
+  return (
+      <MemoizedReactMarkdown
+          className="prose-sm prose-neutral dark:prose-invert prose-p:my-0 prose-pre:my-2"
+          remarkPlugins={[remarkGfm, remarkMath]}
+          components={{
+              p({children}) {
+                  return <p className="mb-2 last:mb-0">{children}</p>
+              },
+              code({node, inline, className, children, ...props}) {
+                  if (children.length) {
+                      if (children[0] == '▍') {
+                          return (
+                              <span className="mt-1 animate-pulse cursor-default">▍</span>
+                          )
+                      }
+
+                      children[0] = (children[0] as string).replace('`▍`', '▍')
+                  }
+
+                  const match = /language-(\w+)/.exec(className || '')
+
+                  if (inline) {
+                      return (
+                          <code className={className} {...props}>
+                              {children}
+                          </code>
+                      )
+                  }
+
+                  return (
+                      <CodeBlock
+                          key={Math.random()}
+                          language={(match && match[1]) || ''}
+                          code={String(children).replace(/\n$/, '')}
+                          {...props}
+                      />
+                  )
+              }
+          }}
+      >
+          {message.text}
+      </MemoizedReactMarkdown>
+  );
+});
+MessageContent.displayName = 'MessageContent';
+
 
 export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -81,18 +118,13 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
             <div
               className={cn(
                 'max-w-prose rounded-lg px-4 py-3 shadow-md transition-all duration-300 ease-out hover:shadow-lg hover:-translate-y-px hover:shadow-primary/20',
-                'prose prose-sm prose-neutral dark:prose-invert prose-p:my-0 prose-pre:my-2',
                 message.role === 'user'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-muted'
               )}
             >
               <div className="text-sm whitespace-pre-wrap space-y-2">
-                {typeof message.text === 'string' && message.text.includes('```') ? (
-                  <MemoizedCodeBlock text={message.text} />
-                ) : (
-                  message.text
-                )}
+                <MessageContent message={message} />
               </div>
               {message.content && typeof message.content === 'string' && message.content.startsWith('data:image') && (
                  <GeneratedImage src={message.content} />
